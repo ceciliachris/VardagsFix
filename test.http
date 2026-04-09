@@ -1,0 +1,35 @@
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User 4",
+  "email": "test4@test.com",
+  "password": "123456"
+}
+
+###
+POST http://localhost:8080/auth/signin
+Content-Type: application/json
+
+{
+  "email": "test4@test.com",
+  "password": "123456"
+}
+
+###
+POST http://localhost:8080/services
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0NEB0ZXN0LmNvbSIsImlhdCI6MTc3NTczNjgxNywiZXhwIjoxNzc1NzQwNDE3fQ.5655v0OK02QGpV8lgOnhOvs_sksi8GwgQoY2hwycEJE
+
+
+{
+  "title": "Kratta",
+  "description": "Test",
+  "price": 100,
+  "userId": 8
+}
+
+###
+GET http://localhost:8080/services
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0NEB0ZXN0LmNvbSIsImlhdCI6MTc3NTczNjgxNywiZXhwIjoxNzc1NzQwNDE3fQ.5655v0OK02QGpV8lgOnhOvs_sksi8GwgQoY2hwycEJE
+

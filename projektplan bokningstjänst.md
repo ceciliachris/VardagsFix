@@ -26,7 +26,7 @@ Projektet fokuserar på att implementera säker autentisering, korrekt bokningsl
 
 ### 2.1 Bakgrund
 
-_Digitala plattformar för att boka tjänster har blivit allt vanligare och används inom flera områden, exempelvis skönhet, träning och djurpassning. Dessa tjänster gör det enklare för användare att hitta och boka olika typer av service på ett strukturerat sätt.
+_Digitala plattformar för att boka tjänster har blivit allt vanligare och används inom flera områden, exempelvis skönhet, träning och djurpassning. Dessa tjänster gör det enklare för användare att hitta och boka olika typer av taskService på ett strukturerat sätt.
 Samtidigt sker en stor del av enklare vardagstjänster fortfarande informellt, till exempel genom inlägg i Facebookgrupper där privatpersoner erbjuder eller efterfrågar hjälp med uppgifter som gräsklippning, hundpromenader eller bortforsling av skräp. Dessa lösningar saknar ofta struktur, sökbarhet och säker hantering av bokningar.
 Det finns därmed ett intresse i att undersöka hur en mer generell digital plattform kan utformas för att samla olika typer av vardagstjänster på ett och samma ställe, samt hur funktioner som användarhantering, bokningssystem och datalagring kan implementeras på ett effektivt sätt._
 
