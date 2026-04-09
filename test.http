@@ -19,7 +19,7 @@ Content-Type: application/json
 ###
 POST http://localhost:8080/services
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0NEB0ZXN0LmNvbSIsImlhdCI6MTc3NTczNjgxNywiZXhwIjoxNzc1NzQwNDE3fQ.5655v0OK02QGpV8lgOnhOvs_sksi8GwgQoY2hwycEJE
+Authorization: Bearer <eyDFGH.....>
 
 
 {
@@ -31,5 +31,4 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0NEB0ZXN0LmNvbSIsImlhd
 
 ###
 GET http://localhost:8080/services
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0NEB0ZXN0LmNvbSIsImlhdCI6MTc3NTczNjgxNywiZXhwIjoxNzc1NzQwNDE3fQ.5655v0OK02QGpV8lgOnhOvs_sksi8GwgQoY2hwycEJE
-
+Authorization: Bearer <eyDFGH.....>
