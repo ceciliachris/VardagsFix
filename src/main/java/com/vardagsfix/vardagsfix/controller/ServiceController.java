@@ -5,6 +5,7 @@ import com.vardagsfix.vardagsfix.dto.TaskServiceResponse;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
 import com.vardagsfix.vardagsfix.model.TaskService;
 import com.vardagsfix.vardagsfix.service.ServiceService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,13 +21,15 @@ public class ServiceController {
     }
 
     @PostMapping
-    public TaskServiceResponse create(@RequestBody TaskServiceRequest request) {
+    public TaskServiceResponse create(@RequestBody TaskServiceRequest request, Authentication authentication) {
         TaskService taskService = new TaskService();
         taskService.setTitle(request.getTitle());
         taskService.setDescription(request.getDescription());
         taskService.setPrice(request.getPrice());
 
-        TaskService savedService = serviceService.createWithUser(taskService, request.getUserId());
+        String email = authentication.getName();
+
+        TaskService savedService = serviceService.createForAuthenticatedUser(taskService, email);
         return mapToResponse(savedService);
     }
 

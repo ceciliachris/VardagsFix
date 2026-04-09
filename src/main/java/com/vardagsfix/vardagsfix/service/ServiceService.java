@@ -30,4 +30,12 @@ public class ServiceService {
     public List<TaskService> getAll() {
         return serviceRepository.findAll();
     }
+
+    public TaskService createForAuthenticatedUser(TaskService taskService, String email) {
+        AppUser user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        taskService.setUser(user);
+        return serviceRepository.save(taskService);
+    }
 }
