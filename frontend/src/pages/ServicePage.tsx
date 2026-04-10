@@ -104,6 +104,12 @@ export default function ServicesPage() {
                 Erbjuds av: <strong>{service.user?.name ?? "Okänd användare"}</strong>
               </p>
               <p style={styles.email}>{service.user?.email ?? ""}</p>
+              <button
+                onClick={() => navigate(`/bookings/create/${service.id}`)}
+                style={styles.bookingButton}
+              >
+                Boka
+              </button>
             </div>
           ))}
         </div>
@@ -136,6 +142,13 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "8px",
     background: "#2563eb",
     color: "#ffffff",
+    cursor: "pointer",
+  },
+   bookingButton: {
+    padding: "10px 16px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#5dc9328a",
     cursor: "pointer",
   },
   logoutButton: {

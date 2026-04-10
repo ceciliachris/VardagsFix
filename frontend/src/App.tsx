@@ -6,6 +6,7 @@ import CreateServicePage from "./pages/CreateServicePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MyServicesPage from "./pages/MyServicesPage";
 import EditServicePage from "./pages/EditServicePage";
+import CreateBookingPage from "./pages/CreateBookingPage";
 
 function App() {
   return (
@@ -46,6 +47,15 @@ function App() {
           element={
             <ProtectedRoute>
               <EditServicePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/bookings/create/:id"
+          element={
+            <ProtectedRoute>
+              <CreateBookingPage />
             </ProtectedRoute>
           }
         />
