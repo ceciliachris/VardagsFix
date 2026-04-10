@@ -1,23 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllServices } from "../api/serviceApi";
-import { removeToken } from "../utils/storage";
-
-type ServiceUser = {
-  id: number;
-  name: string;
-  email: string;
-};
+import { getMyServices, deleteService } from "../api/serviceApi";
 
 type ServiceItem = {
   id: number;
   title: string;
   description: string;
   price: number;
-  user?: ServiceUser;
 };
 
-export default function ServicesPage() {
+export default function MyServicesPage() {
   const navigate = useNavigate();
 
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -27,25 +19,17 @@ export default function ServicesPage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const data = await getAllServices();
-        console.log("Services data:", data);
-
-        if (Array.isArray(data)) {
-          setServices(data);
-        } else {
-          setError("Ogiltigt svar från servern.");
-        }
+        const data = await getMyServices();
+        setServices(data);
       } catch (err: any) {
         console.error(err);
 
-        let message = "Kunde inte hämta tjänster.";
+        let message = "Kunde inte hämta dina tjänster.";
 
         if (typeof err?.response?.data === "string") {
           message = err.response.data;
         } else if (typeof err?.response?.data?.message === "string") {
           message = err.response.data.message;
-        } else if (typeof err?.message === "string") {
-          message = err.message;
         }
 
         setError(message);
@@ -57,41 +41,43 @@ export default function ServicesPage() {
     fetchServices();
   }, []);
 
-  const handleLogout = () => {
-    removeToken();
-    navigate("/");
-  };
-
-  const handleCreateService = () => {
-    navigate("/services/create");
-  };
-
   if (loading) {
-    return <p style={styles.message}>Laddar tjänster...</p>;
+    return <p style={styles.message}>Laddar...</p>;
   }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Är du säker på att du vill ta bort tjänsten?")) {
+      return;
+    }
+
+    try {
+      await deleteService(id);
+
+      setServices((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Kunde inte ta bort tjänsten.");
+    }
+  };
 
   return (
     <div style={styles.wrapper}>
       <div style={styles.topBar}>
-        <h1>Alla tjänster</h1>
+        <h1>Mina tjänster</h1>
 
-        <div style={styles.buttonGroup}>
-          <button onClick={handleCreateService} style={styles.createButton}>
-            Skapa tjänst
-          </button>
-          <button
-            onClick={() => navigate("/services/my")} style={styles.secondaryButton}>
-            Mina tjänster
-          </button>
-          <button onClick={handleLogout} style={styles.logoutButton}>
-            Logga ut
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/services")}
+          style={styles.backButton}
+        >
+          Tillbaka
+        </button>
       </div>
 
       {error && <p style={styles.error}>{error}</p>}
 
-      {!error && services.length === 0 && <p>Inga tjänster hittades.</p>}
+      {!error && services.length === 0 && (
+        <p>Du har inte skapat några tjänster ännu.</p>
+      )}
 
       {!error && services.length > 0 && (
         <div style={styles.list}>
@@ -100,10 +86,18 @@ export default function ServicesPage() {
               <h2 style={styles.title}>{service.title}</h2>
               <p style={styles.description}>{service.description}</p>
               <p style={styles.price}>{service.price} kr</p>
-              <p style={styles.owner}>
-                Erbjuds av: <strong>{service.user?.name ?? "Okänd användare"}</strong>
-              </p>
-              <p style={styles.email}>{service.user?.email ?? ""}</p>
+              <button
+                onClick={() => navigate(`/services/edit/${service.id}`)}
+                style={styles.editButton}
+              >
+                Redigera
+              </button>
+              <button
+                onClick={() => handleDelete(service.id)}
+                style={styles.deleteButton}
+              >
+                Ta bort
+              </button>
             </div>
           ))}
         </div>
@@ -113,6 +107,23 @@ export default function ServicesPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  editButton: {
+  marginTop: "10px",
+  marginRight: "10px",
+  padding: "8px 12px",
+  border: "none",
+  borderRadius: "6px",
+  background: "#fcc86e",
+  cursor: "pointer",
+},
+  deleteButton: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "6px",
+    background: "#f84e4e",
+    cursor: "pointer",
+  },
   wrapper: {
     maxWidth: "900px",
     margin: "0 auto",
@@ -123,22 +134,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "24px",
-    gap: "16px",
-    flexWrap: "wrap",
   },
-  buttonGroup: {
-    display: "flex",
-    gap: "12px",
-  },
-  createButton: {
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#2563eb",
-    color: "#ffffff",
-    cursor: "pointer",
-  },
-  logoutButton: {
+  backButton: {
     padding: "10px 16px",
     border: "none",
     borderRadius: "8px",
@@ -163,30 +160,13 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#4b5563",
   },
   price: {
-    margin: "0 0 10px 0",
-    fontWeight: 700,
-  },
-  owner: {
-    margin: "0 0 4px 0",
-    color: "#111827",
-  },
-  email: {
     margin: 0,
-    color: "#6b7280",
-    fontSize: "14px",
+    fontWeight: 700,
   },
   message: {
     padding: "24px",
   },
   error: {
     color: "#c62828",
-  },
-  secondaryButton: {
-    padding: "10px 16px",
-    border: "1px solid #2563eb",
-    borderRadius: "8px",
-    background: "transparent",
-    color: "#2563eb",
-    cursor: "pointer",
   },
 };

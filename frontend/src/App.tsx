@@ -4,6 +4,8 @@ import RegisterPage from "./pages/RegisterPage";
 import ServicesPage from "./pages/ServicePage";
 import CreateServicePage from "./pages/CreateServicePage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MyServicesPage from "./pages/MyServicesPage";
+import EditServicePage from "./pages/EditServicePage";
 
 function App() {
   return (
@@ -26,6 +28,24 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateServicePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/services/my"
+          element={
+            <ProtectedRoute>
+              <MyServicesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/services/edit/:id"
+          element={
+            <ProtectedRoute>
+              <EditServicePage />
             </ProtectedRoute>
           }
         />
