@@ -57,4 +57,26 @@ public class ServiceController {
 
         return response;
     }
+
+    @PutMapping("/{id}")
+    public TaskServiceResponse update(
+            @PathVariable Long id,
+            @RequestBody TaskServiceRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        TaskService updated = serviceService.update(id, request, email);
+        return mapToResponse(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+        serviceService.delete(id, email);
+    }
+
 }
