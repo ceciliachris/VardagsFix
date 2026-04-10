@@ -40,6 +40,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/services/**").authenticated()
+                        .requestMatchers("/bookings/**").authenticated()
                         .anyRequest().authenticated()
                 );
 

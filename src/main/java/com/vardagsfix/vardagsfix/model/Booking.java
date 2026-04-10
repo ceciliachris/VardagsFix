@@ -6,18 +6,23 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "bookings")
 @Data
 public class Booking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private LocalDateTime startTime;
+
     private LocalDateTime endTime;
 
     @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
     @ManyToOne
-    private TaskService service;
+    @JoinColumn(name = "service_id", nullable = false)
+    private TaskService taskService;
 }
