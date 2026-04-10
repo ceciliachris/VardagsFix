@@ -5,11 +5,13 @@ import com.vardagsfix.vardagsfix.dto.TaskServiceResponse;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
 import com.vardagsfix.vardagsfix.model.TaskService;
 import com.vardagsfix.vardagsfix.service.ServiceService;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Valid
 @RestController
 @RequestMapping("/services")
 public class ServiceController {
@@ -77,6 +79,15 @@ public class ServiceController {
     ) {
         String email = authentication.getName();
         serviceService.delete(id, email);
+    }
+
+    @GetMapping("/my")
+    public List<TaskServiceResponse> getMyServices(Authentication authentication) {
+        String email = authentication.getName();
+
+        return serviceService.getByUser(email).stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
 }

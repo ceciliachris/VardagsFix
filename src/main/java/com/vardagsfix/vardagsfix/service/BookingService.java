@@ -5,6 +5,7 @@ import com.vardagsfix.vardagsfix.exception.ResourceNotFoundException;
 import com.vardagsfix.vardagsfix.exception.UnauthorizedActionException;
 import com.vardagsfix.vardagsfix.model.AppUser;
 import com.vardagsfix.vardagsfix.model.Booking;
+import com.vardagsfix.vardagsfix.model.BookingStatus;
 import com.vardagsfix.vardagsfix.model.TaskService;
 import com.vardagsfix.vardagsfix.repository.BookingRepository;
 import com.vardagsfix.vardagsfix.repository.ServiceRepository;
@@ -47,9 +48,10 @@ public class BookingService {
             throw new IllegalArgumentException("Start time must be before end time");
         }
 
-        boolean hasConflict = bookingRepository
-                .existsByTaskServiceIdAndStartTimeLessThanAndEndTimeGreaterThan(
+        boolean hasConflict =
+                bookingRepository.existsByTaskServiceIdAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
                         request.getServiceId(),
+                        BookingStatus.BOOKED,
                         request.getEndTime(),
                         request.getStartTime()
                 );
@@ -61,6 +63,7 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
+        booking.setStatus(BookingStatus.BOOKED);
         booking.setUser(user);
         booking.setTaskService(taskService);
 
@@ -71,14 +74,22 @@ public class BookingService {
         return bookingRepository.findByUserEmail(email);
     }
 
-    public void cancelBooking(Long bookingId, String email) {
+    public Booking cancelBooking(Long bookingId, String email) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getUser().getEmail().equals(email)) {
+        boolean isBooker = booking.getUser().getEmail().equals(email);
+        boolean isServiceOwner = booking.getTaskService().getUser().getEmail().equals(email);
+
+        if (!isBooker && !isServiceOwner) {
             throw new UnauthorizedActionException("You are not allowed to cancel this booking");
         }
 
-        bookingRepository.delete(booking);
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalArgumentException("Booking is already cancelled");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        return bookingRepository.save(booking);
     }
 }

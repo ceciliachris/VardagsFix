@@ -185,13 +185,13 @@ class BookingServiceTest {
 
     @Test
     void getMyBookings_shouldReturnBookingsForUser() {
-        when(bookingRepository.findByUserEmail("cecilia@test.com")).thenReturn(List.of(booking));
+        when(bookingRepository.findByUser_Email("cecilia@test.com")).thenReturn(List.of(booking));
 
         List<Booking> result = bookingService.getMyBookings("cecilia@test.com");
 
         assertEquals(1, result.size());
         assertEquals(booking, result.get(0));
-        verify(bookingRepository).findByUserEmail("cecilia@test.com");
+        verify(bookingRepository).findByUser_Email("cecilia@test.com");
     }
 
     @Test

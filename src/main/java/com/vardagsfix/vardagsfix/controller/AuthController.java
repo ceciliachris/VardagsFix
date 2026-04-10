@@ -5,11 +5,13 @@ import com.vardagsfix.vardagsfix.dto.RegisterRequest;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
 import com.vardagsfix.vardagsfix.model.AppUser;
 import com.vardagsfix.vardagsfix.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Valid
 @RestController
 @RequestMapping("/auth")
 public class AuthController {

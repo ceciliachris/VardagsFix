@@ -35,10 +35,11 @@ public class BookingController {
                 .toList();
     }
 
-    @DeleteMapping("/{id}")
-    public void cancel(@PathVariable Long id, Authentication authentication) {
+    @PatchMapping("/{id}/cancel")
+    public BookingResponse cancel(@PathVariable Long id, Authentication authentication) {
         String email = authentication.getName();
-        bookingService.cancelBooking(id, email);
+        Booking booking = bookingService.cancelBooking(id, email);
+        return mapToResponse(booking);
     }
 
     private BookingResponse mapToResponse(Booking booking) {
@@ -48,6 +49,7 @@ public class BookingController {
         response.setEndTime(booking.getEndTime());
         response.setServiceId(booking.getTaskService().getId());
         response.setServiceTitle(booking.getTaskService().getTitle());
+        response.setStatus(booking.getStatus());
 
         UserResponse userResponse = new UserResponse();
         userResponse.setId(booking.getUser().getId());
