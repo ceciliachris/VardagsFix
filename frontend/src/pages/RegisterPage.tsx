@@ -1,12 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../api/authApi";
-import { saveToken } from "../utils/storage";
+import { register } from "../api/authApi";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -21,14 +21,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const token = await login({ email, password });
-      saveToken(token);
-      setSuccess("Inloggning lyckades.");
-      navigate("/services");
+      await register({ name, email, password });
+      setSuccess("Konto skapat! Du kan nu logga in.");
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
     } catch (err: any) {
       console.error(err);
 
-      let message = "Kunde inte logga in.";
+      let message = "Kunde inte registrera konto.";
 
       if (typeof err?.response?.data === "string") {
         message = err.response.data;
@@ -36,8 +37,6 @@ export default function LoginPage() {
         message = err.response.data.message;
       } else if (typeof err?.message === "string") {
         message = err.message;
-      } else if (err?.response?.status) {
-        message = `Fel från servern (${err.response.status}).`;
       }
 
       setError(message);
@@ -49,7 +48,17 @@ export default function LoginPage() {
   return (
     <div style={styles.wrapper}>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <h1 style={styles.heading}>Logga in</h1>
+        <h1 style={styles.heading}>Registrera konto</h1>
+
+        <label style={styles.label}>Namn</label>
+        <input
+          type="text"
+          placeholder="Ditt namn"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={styles.input}
+          required
+        />
 
         <label style={styles.label}>E-post</label>
         <input
@@ -72,14 +81,15 @@ export default function LoginPage() {
         />
 
         <button type="submit" style={styles.button} disabled={loading}>
-          {loading ? "Loggar in..." : "Logga in"}
+          {loading ? "Registrerar..." : "Registrera"}
         </button>
 
         {error && <p style={styles.error}>{error}</p>}
         {success && <p style={styles.success}>{success}</p>}
+
         <p style={styles.text}>
-  Har du inget konto? <Link to="/register">Registrera dig här</Link>
-</p>
+          Har du redan konto? <Link to="/">Logga in här</Link>
+        </p>
       </form>
     </div>
   );
@@ -140,7 +150,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
   text: {
-  marginTop: "8px",
-  fontSize: "14px",
-},
+    marginTop: "8px",
+    fontSize: "14px",
+  },
 };
