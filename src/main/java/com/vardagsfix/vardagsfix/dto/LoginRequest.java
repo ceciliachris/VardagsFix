@@ -3,13 +3,13 @@ package com.vardagsfix.vardagsfix.dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
-@NotBlank
-@Email
-@NotNull
-@Positive
-@Future
 @Data
 public class LoginRequest {
+
+    @NotBlank
+    @Email
     private String email;
+
+    @NotBlank
     private String password;
 }
