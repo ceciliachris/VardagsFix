@@ -1,5 +1,7 @@
 package com.vardagsfix.vardagsfix.controller;
 
+import com.vardagsfix.vardagsfix.dto.LoginRequest;
+import com.vardagsfix.vardagsfix.dto.RegisterRequest;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
 import com.vardagsfix.vardagsfix.model.AppUser;
 import com.vardagsfix.vardagsfix.service.AuthService;
@@ -19,7 +21,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public UserResponse register(@RequestBody AppUser user) {
+    public UserResponse register(@RequestBody RegisterRequest request) {
+
+        AppUser user = new AppUser();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
+
         AppUser savedUser = authService.register(user);
 
         UserResponse response = new UserResponse();
@@ -31,7 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public String login(@RequestBody AppUser user) {
-        return authService.login(user.getEmail(), user.getPassword());
+    public String login(@RequestBody LoginRequest request) {
+        return authService.login(request.getEmail(), request.getPassword());
     }
 }
