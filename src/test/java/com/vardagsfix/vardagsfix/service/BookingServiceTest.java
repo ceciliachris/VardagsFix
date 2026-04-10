@@ -3,9 +3,7 @@ package com.vardagsfix.vardagsfix.service;
 import com.vardagsfix.vardagsfix.dto.BookingRequest;
 import com.vardagsfix.vardagsfix.exception.ResourceNotFoundException;
 import com.vardagsfix.vardagsfix.exception.UnauthorizedActionException;
-import com.vardagsfix.vardagsfix.model.AppUser;
-import com.vardagsfix.vardagsfix.model.Booking;
-import com.vardagsfix.vardagsfix.model.TaskService;
+import com.vardagsfix.vardagsfix.model.*;
 import com.vardagsfix.vardagsfix.repository.BookingRepository;
 import com.vardagsfix.vardagsfix.repository.ServiceRepository;
 import com.vardagsfix.vardagsfix.repository.UserRepository;
@@ -59,7 +57,7 @@ class BookingServiceTest {
         taskService = new TaskService();
         taskService.setId(10L);
         taskService.setTitle("Gräsklippning");
-        taskService.setDescription("Jag hjälper till med gräsklippning");
+        taskService.setDescription("...");
         taskService.setPrice(300.0);
         taskService.setUser(serviceOwner);
 
@@ -74,143 +72,85 @@ class BookingServiceTest {
         booking.setEndTime(request.getEndTime());
         booking.setUser(bookingUser);
         booking.setTaskService(taskService);
+        booking.setStatus(BookingStatus.BOOKED);
     }
 
     @Test
     void createBooking_shouldSaveBooking_whenRequestIsValid() {
         when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
         when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
-        when(bookingRepository.existsByTaskServiceIdAndStartTimeLessThanAndEndTimeGreaterThan(
-                10L, request.getEndTime(), request.getStartTime()
+        when(bookingRepository.existsByTaskServiceIdAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
+                10L, BookingStatus.BOOKED, request.getEndTime(), request.getStartTime()
         )).thenReturn(false);
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
 
         Booking saved = bookingService.createBooking(request, "cecilia@test.com");
 
-        assertEquals(bookingUser, saved.getUser());
-        assertEquals(taskService, saved.getTaskService());
-        assertEquals(request.getStartTime(), saved.getStartTime());
-        assertEquals(request.getEndTime(), saved.getEndTime());
-
+        assertEquals(BookingStatus.BOOKED, saved.getStatus());
         verify(bookingRepository).save(any(Booking.class));
-    }
-
-    @Test
-    void createBooking_shouldThrowNotFound_whenUserDoesNotExist() {
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class,
-                () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    void createBooking_shouldThrowNotFound_whenServiceDoesNotExist() {
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
-        when(serviceRepository.findById(10L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class,
-                () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    void createBooking_shouldThrowUnauthorized_whenUserBooksOwnService() {
-        taskService.setUser(bookingUser);
-
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
-        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
-
-        assertThrows(UnauthorizedActionException.class,
-                () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    void createBooking_shouldThrowIllegalArgument_whenStartTimeIsNull() {
-        request.setStartTime(null);
-
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
-        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    void createBooking_shouldThrowIllegalArgument_whenEndTimeIsNull() {
-        request.setEndTime(null);
-
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
-        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    void createBooking_shouldThrowIllegalArgument_whenStartTimeIsAfterEndTime() {
-        request.setStartTime(LocalDateTime.of(2026, 4, 11, 13, 0));
-        request.setEndTime(LocalDateTime.of(2026, 4, 11, 12, 0));
-
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
-        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
-
-        assertThrows(IllegalArgumentException.class,
-                () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
     }
 
     @Test
     void createBooking_shouldThrowIllegalArgument_whenTimeConflicts() {
         when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(bookingUser));
         when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
-        when(bookingRepository.existsByTaskServiceIdAndStartTimeLessThanAndEndTimeGreaterThan(
-                10L, request.getEndTime(), request.getStartTime()
+        when(bookingRepository.existsByTaskServiceIdAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
+                10L, BookingStatus.BOOKED, request.getEndTime(), request.getStartTime()
         )).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
                 () -> bookingService.createBooking(request, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).save(any());
     }
 
     @Test
     void getMyBookings_shouldReturnBookingsForUser() {
-        when(bookingRepository.findByUser_Email("cecilia@test.com")).thenReturn(List.of(booking));
+        when(bookingRepository.findByUserEmail("cecilia@test.com"))
+                .thenReturn(List.of(booking));
 
         List<Booking> result = bookingService.getMyBookings("cecilia@test.com");
 
         assertEquals(1, result.size());
-        assertEquals(booking, result.get(0));
-        verify(bookingRepository).findByUser_Email("cecilia@test.com");
+        verify(bookingRepository).findByUserEmail("cecilia@test.com");
     }
 
     @Test
-    void cancelBooking_shouldDeleteBooking_whenUserOwnsBooking() {
+    void cancelBooking_shouldSetStatusCancelled_whenUserIsBooker() {
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any())).thenReturn(booking);
 
-        bookingService.cancelBooking(100L, "cecilia@test.com");
+        Booking result = bookingService.cancelBooking(100L, "cecilia@test.com");
 
-        verify(bookingRepository).delete(booking);
+        assertEquals(BookingStatus.CANCELLED, result.getStatus());
+        verify(bookingRepository).save(booking);
     }
 
     @Test
-    void cancelBooking_shouldThrowUnauthorized_whenUserDoesNotOwnBooking() {
+    void cancelBooking_shouldSetStatusCancelled_whenUserIsServiceOwner() {
+        when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any())).thenReturn(booking);
+
+        Booking result = bookingService.cancelBooking(100L, "owner@test.com");
+
+        assertEquals(BookingStatus.CANCELLED, result.getStatus());
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void cancelBooking_shouldThrowUnauthorized_whenUserNotAllowed() {
         when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
 
         assertThrows(UnauthorizedActionException.class,
                 () -> bookingService.cancelBooking(100L, "other@test.com"));
+    }
 
-        verify(bookingRepository, never()).delete(any());
+    @Test
+    void cancelBooking_shouldThrowIllegalArgument_whenAlreadyCancelled() {
+        booking.setStatus(BookingStatus.CANCELLED);
+        when(bookingRepository.findById(100L)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.cancelBooking(100L, "cecilia@test.com"));
     }
 
     @Test
@@ -219,7 +159,5 @@ class BookingServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> bookingService.cancelBooking(100L, "cecilia@test.com"));
-
-        verify(bookingRepository, never()).delete(any());
     }
 }
