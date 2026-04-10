@@ -62,6 +62,10 @@ export default function ServicesPage() {
     navigate("/");
   };
 
+  const handleCreateService = () => {
+    navigate("/services/create");
+  };
+
   if (loading) {
     return <p style={styles.message}>Laddar tjänster...</p>;
   }
@@ -70,9 +74,15 @@ export default function ServicesPage() {
     <div style={styles.wrapper}>
       <div style={styles.topBar}>
         <h1>Alla tjänster</h1>
-        <button onClick={handleLogout} style={styles.logoutButton}>
-          Logga ut
-        </button>
+
+        <div style={styles.buttonGroup}>
+          <button onClick={handleCreateService} style={styles.createButton}>
+            Skapa tjänst
+          </button>
+          <button onClick={handleLogout} style={styles.logoutButton}>
+            Logga ut
+          </button>
+        </div>
       </div>
 
       {error && <p style={styles.error}>{error}</p>}
@@ -109,6 +119,20 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "24px",
+    gap: "16px",
+    flexWrap: "wrap",
+  },
+  buttonGroup: {
+    display: "flex",
+    gap: "12px",
+  },
+  createButton: {
+    padding: "10px 16px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#2563eb",
+    color: "#ffffff",
+    cursor: "pointer",
   },
   logoutButton: {
     padding: "10px 16px",
