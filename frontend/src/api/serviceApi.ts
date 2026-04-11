@@ -1,16 +1,19 @@
 import { api } from "./axios";
 
-export const getAllServices = async () => {
-  const response = await api.get("/services");
-  return response.data;
+type AvailableSlotRequest = {
+  startTime: string;
+  endTime: string;
 };
 
-export const createService = async (data: {
+type TaskServiceRequest = {
   title: string;
   description: string;
   price: number;
-}) => {
-  const response = await api.post("/services", data);
+  availableSlots?: AvailableSlotRequest[];
+};
+
+export const getAllServices = async () => {
+  const response = await api.get("/services");
   return response.data;
 };
 
@@ -19,18 +22,17 @@ export const getMyServices = async () => {
   return response.data;
 };
 
-export const deleteService = async (id: number) => {
-  await api.delete(`/services/${id}`);
+export const createService = async (data: TaskServiceRequest) => {
+  const response = await api.post("/services", data);
+  return response.data;
 };
 
-export const updateService = async (
-  id: number,
-  data: {
-    title: string;
-    description: string;
-    price: number;
-  }
-) => {
+export const updateService = async (id: number, data: TaskServiceRequest) => {
   const response = await api.put(`/services/${id}`, data);
+  return response.data;
+};
+
+export const deleteService = async (id: number) => {
+  const response = await api.delete(`/services/${id}`);
   return response.data;
 };

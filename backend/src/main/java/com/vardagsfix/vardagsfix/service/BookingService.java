@@ -4,9 +4,11 @@ import com.vardagsfix.vardagsfix.dto.BookingRequest;
 import com.vardagsfix.vardagsfix.exception.ResourceNotFoundException;
 import com.vardagsfix.vardagsfix.exception.UnauthorizedActionException;
 import com.vardagsfix.vardagsfix.model.AppUser;
+import com.vardagsfix.vardagsfix.model.AvailableSlot;
 import com.vardagsfix.vardagsfix.model.Booking;
 import com.vardagsfix.vardagsfix.model.BookingStatus;
 import com.vardagsfix.vardagsfix.model.TaskService;
+import com.vardagsfix.vardagsfix.repository.AvailableSlotRepository;
 import com.vardagsfix.vardagsfix.repository.BookingRepository;
 import com.vardagsfix.vardagsfix.repository.ServiceRepository;
 import com.vardagsfix.vardagsfix.repository.UserRepository;
@@ -20,13 +22,16 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final ServiceRepository serviceRepository;
+    private final AvailableSlotRepository availableSlotRepository;
 
     public BookingService(BookingRepository bookingRepository,
                           UserRepository userRepository,
-                          ServiceRepository serviceRepository) {
+                          ServiceRepository serviceRepository,
+                          AvailableSlotRepository availableSlotRepository) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.serviceRepository = serviceRepository;
+        this.availableSlotRepository = availableSlotRepository;
     }
 
     public Booking createBooking(BookingRequest request, String email) {
@@ -40,20 +45,27 @@ public class BookingService {
             throw new UnauthorizedActionException("You cannot book your own service");
         }
 
-        if (request.getStartTime() == null || request.getEndTime() == null) {
-            throw new IllegalArgumentException("Start time and end time are required");
+        if (request.getSlotId() == null) {
+            throw new IllegalArgumentException("Slot id is required");
         }
 
-        if (!request.getStartTime().isBefore(request.getEndTime())) {
-            throw new IllegalArgumentException("Start time must be before end time");
+        AvailableSlot slot = availableSlotRepository.findById(request.getSlotId())
+                .orElseThrow(() -> new ResourceNotFoundException("Available slot not found"));
+
+        if (!slot.getTaskService().getId().equals(taskService.getId())) {
+            throw new IllegalArgumentException("Selected slot does not belong to this service");
+        }
+
+        if (slot.isBooked()) {
+            throw new IllegalArgumentException("Selected slot is already booked");
         }
 
         boolean hasConflict =
                 bookingRepository.existsByTaskServiceIdAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
                         request.getServiceId(),
                         BookingStatus.BOOKED,
-                        request.getEndTime(),
-                        request.getStartTime()
+                        slot.getEndTime(),
+                        slot.getStartTime()
                 );
 
         if (hasConflict) {
@@ -61,17 +73,26 @@ public class BookingService {
         }
 
         Booking booking = new Booking();
-        booking.setStartTime(request.getStartTime());
-        booking.setEndTime(request.getEndTime());
+        booking.setStartTime(slot.getStartTime());
+        booking.setEndTime(slot.getEndTime());
         booking.setStatus(BookingStatus.BOOKED);
         booking.setUser(user);
         booking.setTaskService(taskService);
+        booking.setAvailableSlot(slot);
+        booking.setMessage(request.getMessage());
+
+        slot.setBooked(true);
+        availableSlotRepository.save(slot);
 
         return bookingRepository.save(booking);
     }
 
     public List<Booking> getMyBookings(String email) {
         return bookingRepository.findByUserEmail(email);
+    }
+
+    public List<Booking> getBookingsForMyServices(String email) {
+        return bookingRepository.findByTaskService_User_Email(email);
     }
 
     public Booking cancelBooking(Long bookingId, String email) {
@@ -90,6 +111,13 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+
+        if (booking.getAvailableSlot() != null) {
+            AvailableSlot slot = booking.getAvailableSlot();
+            slot.setBooked(false);
+            availableSlotRepository.save(slot);
+        }
+
         return bookingRepository.save(booking);
     }
 }

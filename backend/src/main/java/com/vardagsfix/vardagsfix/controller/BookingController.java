@@ -4,6 +4,7 @@ import com.vardagsfix.vardagsfix.dto.BookingRequest;
 import com.vardagsfix.vardagsfix.dto.BookingResponse;
 import com.vardagsfix.vardagsfix.dto.TaskServiceResponse;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
+import com.vardagsfix.vardagsfix.dto.AvailableSlotResponse;
 import com.vardagsfix.vardagsfix.model.Booking;
 import com.vardagsfix.vardagsfix.service.BookingService;
 import org.springframework.security.core.Authentication;
@@ -36,6 +37,14 @@ public class BookingController {
                 .toList();
     }
 
+    @GetMapping("/my-services")
+    public List<BookingResponse> getBookingsForMyServices(Authentication authentication) {
+        String email = authentication.getName();
+        return bookingService.getBookingsForMyServices(email).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     @PatchMapping("/{id}/cancel")
     public BookingResponse cancel(@PathVariable Long id, Authentication authentication) {
         String email = authentication.getName();
@@ -49,6 +58,7 @@ public class BookingController {
         response.setStartTime(booking.getStartTime());
         response.setEndTime(booking.getEndTime());
         response.setStatus(booking.getStatus());
+        response.setMessage(booking.getMessage());
 
         TaskServiceResponse serviceResponse = new TaskServiceResponse();
         serviceResponse.setId(booking.getTaskService().getId());
@@ -61,6 +71,21 @@ public class BookingController {
         serviceUserResponse.setName(booking.getTaskService().getUser().getName());
         serviceUserResponse.setEmail(booking.getTaskService().getUser().getEmail());
         serviceResponse.setUser(serviceUserResponse);
+
+        if (booking.getTaskService().getAvailableSlots() != null) {
+            List<AvailableSlotResponse> slotResponses = booking.getTaskService().getAvailableSlots().stream()
+                    .map(slot -> {
+                        AvailableSlotResponse slotResponse = new AvailableSlotResponse();
+                        slotResponse.setId(slot.getId());
+                        slotResponse.setStartTime(slot.getStartTime());
+                        slotResponse.setEndTime(slot.getEndTime());
+                        slotResponse.setBooked(slot.isBooked());
+                        return slotResponse;
+                    })
+                    .toList();
+
+            serviceResponse.setAvailableSlots(slotResponses);
+        }
 
         response.setService(serviceResponse);
 

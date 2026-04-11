@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { createService } from "../api/serviceApi";
 import { ui } from "../styles/ui";
 
+type SlotFormItem = {
+  startTime: string;
+  endTime: string;
+};
+
 export default function CreateServicePage() {
   const navigate = useNavigate();
 
@@ -10,8 +15,56 @@ export default function CreateServicePage() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
 
+  const [slotStartTime, setSlotStartTime] = useState("");
+  const [slotEndTime, setSlotEndTime] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<SlotFormItem[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleAddSlot = () => {
+    setError("");
+
+    if (!slotStartTime) {
+      setError("Starttid för tillgänglig tid måste fyllas i.");
+      return;
+    }
+
+    if (!slotEndTime) {
+      setError("Sluttid för tillgänglig tid måste fyllas i.");
+      return;
+    }
+
+    const startDate = new Date(slotStartTime);
+    const endDate = new Date(slotEndTime);
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      setError("Ogiltigt datum eller tid för tillgänglig tid.");
+      return;
+    }
+
+    if (endDate <= startDate) {
+      setError("Sluttid för tillgänglig tid måste vara efter starttid.");
+      return;
+    }
+
+    setAvailableSlots((prev) => [
+      ...prev,
+      {
+        startTime: slotStartTime,
+        endTime: slotEndTime,
+      },
+    ]);
+
+    setSlotStartTime("");
+    setSlotEndTime("");
+  };
+
+  const handleRemoveSlot = (indexToRemove: number) => {
+    setAvailableSlots((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,6 +94,11 @@ export default function CreateServicePage() {
       return;
     }
 
+    if (availableSlots.length === 0) {
+      setError("Du måste lägga till minst en tillgänglig tid.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -48,6 +106,7 @@ export default function CreateServicePage() {
         title: trimmedTitle,
         description: trimmedDescription,
         price: numericPrice,
+        availableSlots,
       });
 
       navigate("/services");
@@ -101,6 +160,57 @@ export default function CreateServicePage() {
           required
         />
 
+        <div style={styles.slotSection}>
+          <h2 style={styles.sectionTitle}>Tillgängliga tider</h2>
+
+          <label style={styles.label}>Starttid</label>
+          <input
+            type="datetime-local"
+            value={slotStartTime}
+            onChange={(e) => setSlotStartTime(e.target.value)}
+            style={ui.input}
+          />
+
+          <label style={styles.label}>Sluttid</label>
+          <input
+            type="datetime-local"
+            value={slotEndTime}
+            onChange={(e) => setSlotEndTime(e.target.value)}
+            style={ui.input}
+          />
+
+          <button
+            type="button"
+            onClick={handleAddSlot}
+            style={styles.addSlotButton}
+          >
+            Lägg till tid
+          </button>
+
+          {availableSlots.length > 0 && (
+            <div style={styles.slotList}>
+              {availableSlots.map((slot, index) => (
+                <div key={index} style={styles.slotCard}>
+                  <p style={styles.slotText}>
+                    <strong>Start:</strong> {slot.startTime}
+                  </p>
+                  <p style={styles.slotText}>
+                    <strong>Slut:</strong> {slot.endTime}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSlot(index)}
+                    style={styles.removeSlotButton}
+                  >
+                    Ta bort tid
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div style={ui.buttonRow}>
           <button type="submit" disabled={loading} style={ui.primaryBlueButton}>
             {loading ? "Sparar..." : "Skapa"}
@@ -121,3 +231,55 @@ export default function CreateServicePage() {
     </div>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  slotSection: {
+    marginTop: "8px",
+    padding: "16px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    background: "#f9fafb",
+  },
+  sectionTitle: {
+    margin: "0 0 12px 0",
+    fontSize: "18px",
+  },
+  label: {
+    display: "block",
+    marginBottom: "6px",
+    fontWeight: 600,
+    color: "#111827",
+  },
+  addSlotButton: {
+    marginTop: "12px",
+    padding: "10px 14px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#2563eb",
+    color: "#ffffff",
+    cursor: "pointer",
+  },
+  slotList: {
+    display: "grid",
+    gap: "12px",
+    marginTop: "16px",
+  },
+  slotCard: {
+    padding: "12px",
+    borderRadius: "10px",
+    background: "#ffffff",
+    border: "1px solid #d1d5db",
+  },
+  slotText: {
+    margin: "0 0 8px 0",
+    color: "#374151",
+  },
+  removeSlotButton: {
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#ef4444",
+    color: "#ffffff",
+    cursor: "pointer",
+  },
+};

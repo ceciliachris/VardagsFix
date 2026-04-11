@@ -1,10 +1,12 @@
 import { api } from "./axios";
 
-export const createBooking = async (data: {
+type CreateBookingData = {
   serviceId: number;
-  startTime: string;
-  endTime: string;
-}) => {
+  slotId: number;
+  message?: string;
+};
+
+export const createBooking = async (data: CreateBookingData) => {
   const response = await api.post("/bookings", data);
   return response.data;
 };
@@ -14,6 +16,12 @@ export const getMyBookings = async () => {
   return response.data;
 };
 
+export const getBookingsForMyServices = async () => {
+  const response = await api.get("/bookings/my-services");
+  return response.data;
+};
+
 export const cancelBooking = async (id: number) => {
-  await api.patch(`/bookings/${id}/cancel`);
+  const response = await api.patch(`/bookings/${id}/cancel`);
+  return response.data;
 };

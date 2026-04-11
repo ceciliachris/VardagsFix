@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { cancelBooking, getMyBookings } from "../api/bookingApi";
+import { getBookingsForMyServices, cancelBooking } from "../api/bookingApi";
 import { ui } from "../styles/ui";
 
 type BookingServiceUser = {
@@ -59,7 +59,7 @@ function getStatusLabel(status: string) {
   }
 }
 
-export default function MyBookingsPage() {
+export default function MyServiceBookingsPage() {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -68,7 +68,7 @@ export default function MyBookingsPage() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const data = await getMyBookings();
+        const data = await getBookingsForMyServices();
 
         if (Array.isArray(data)) {
           setBookings(data);
@@ -78,7 +78,7 @@ export default function MyBookingsPage() {
       } catch (err: any) {
         console.error(err);
 
-        let message = "Kunde inte hämta dina bokningar.";
+        let message = "Kunde inte hämta bokningar på dina tjänster.";
 
         if (typeof err?.response?.data === "string") {
           message = err.response.data;
@@ -128,13 +128,13 @@ export default function MyBookingsPage() {
   return (
     <div style={ui.pageWrapper}>
       <div style={ui.topBar}>
-        <h1>Mina bokningar</h1>
+        <h1>Bokningar på mina tjänster</h1>
       </div>
 
       {error && <p style={ui.error}>{error}</p>}
 
       {!error && bookings.length === 0 && (
-        <p style={ui.message}>Du har inga bokningar ännu.</p>
+        <p style={ui.message}>Ingen har bokat dina tjänster ännu.</p>
       )}
 
       {!error && bookings.length > 0 && (
@@ -149,11 +149,11 @@ export default function MyBookingsPage() {
                 <p style={styles.description}>{booking.service.description}</p>
                 <p style={styles.price}>{booking.service.price} kr</p>
 
-                <p style={styles.owner}>
-                  Erbjuds av: <strong>{booking.service.user.name}</strong>
+                <p style={styles.customer}>
+                  Bokad av: <strong>{booking.user.name}</strong>
                 </p>
 
-                <p style={styles.email}>{booking.service.user.email}</p>
+                <p style={styles.email}>{booking.user.email}</p>
 
                 <p style={styles.bookingTime}>
                   <strong>Start:</strong> {formatDateTime(booking.startTime)}
@@ -208,7 +208,7 @@ const styles: Record<string, CSSProperties> = {
     margin: "0 0 12px 0",
     fontWeight: 700,
   },
-  owner: {
+  customer: {
     margin: "0 0 4px 0",
     color: "#111827",
   },

@@ -8,17 +8,15 @@ import MyServicesPage from "./pages/MyServicesPage";
 import EditServicePage from "./pages/EditServicePage";
 import CreateBookingPage from "./pages/CreateBookingPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
+import MyServiceBookingsPage from "./pages/MyServiceBookingsPage";
 import Layout from "./components/Layout";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* PUBLIC ROUTES */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-
-        {/* PROTECTED ROUTES MED LAYOUT */}
 
         <Route
           path="/services"
@@ -81,6 +79,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <MyBookingsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/bookings/my-services"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MyServiceBookingsPage />
               </Layout>
             </ProtectedRoute>
           }

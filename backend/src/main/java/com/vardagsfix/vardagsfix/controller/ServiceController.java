@@ -1,5 +1,6 @@
 package com.vardagsfix.vardagsfix.controller;
 
+import com.vardagsfix.vardagsfix.dto.AvailableSlotResponse;
 import com.vardagsfix.vardagsfix.dto.TaskServiceRequest;
 import com.vardagsfix.vardagsfix.dto.TaskServiceResponse;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
@@ -24,14 +25,8 @@ public class ServiceController {
 
     @PostMapping
     public TaskServiceResponse create(@RequestBody TaskServiceRequest request, Authentication authentication) {
-        TaskService taskService = new TaskService();
-        taskService.setTitle(request.getTitle());
-        taskService.setDescription(request.getDescription());
-        taskService.setPrice(request.getPrice());
-
         String email = authentication.getName();
-
-        TaskService savedService = serviceService.createForAuthenticatedUser(taskService, email);
+        TaskService savedService = serviceService.createForAuthenticatedUser(request, email);
         return mapToResponse(savedService);
     }
 
@@ -42,24 +37,6 @@ public class ServiceController {
                 .toList();
     }
 
-    private TaskServiceResponse mapToResponse(TaskService taskService) {
-        TaskServiceResponse response = new TaskServiceResponse();
-        response.setId(taskService.getId());
-        response.setTitle(taskService.getTitle());
-        response.setDescription(taskService.getDescription());
-        response.setPrice(taskService.getPrice());
-
-        if (taskService.getUser() != null) {
-            UserResponse userResponse = new UserResponse();
-            userResponse.setId(taskService.getUser().getId());
-            userResponse.setName(taskService.getUser().getName());
-            userResponse.setEmail(taskService.getUser().getEmail());
-            response.setUser(userResponse);
-        }
-
-        return response;
-    }
-
     @PutMapping("/{id}")
     public TaskServiceResponse update(
             @PathVariable Long id,
@@ -67,7 +44,6 @@ public class ServiceController {
             Authentication authentication
     ) {
         String email = authentication.getName();
-
         TaskService updated = serviceService.update(id, request, email);
         return mapToResponse(updated);
     }
@@ -90,4 +66,36 @@ public class ServiceController {
                 .toList();
     }
 
+    private TaskServiceResponse mapToResponse(TaskService taskService) {
+        TaskServiceResponse response = new TaskServiceResponse();
+        response.setId(taskService.getId());
+        response.setTitle(taskService.getTitle());
+        response.setDescription(taskService.getDescription());
+        response.setPrice(taskService.getPrice());
+
+        if (taskService.getUser() != null) {
+            UserResponse userResponse = new UserResponse();
+            userResponse.setId(taskService.getUser().getId());
+            userResponse.setName(taskService.getUser().getName());
+            userResponse.setEmail(taskService.getUser().getEmail());
+            response.setUser(userResponse);
+        }
+
+        if (taskService.getAvailableSlots() != null) {
+            List<AvailableSlotResponse> slotResponses = taskService.getAvailableSlots().stream()
+                    .map(slot -> {
+                        AvailableSlotResponse slotResponse = new AvailableSlotResponse();
+                        slotResponse.setId(slot.getId());
+                        slotResponse.setStartTime(slot.getStartTime());
+                        slotResponse.setEndTime(slot.getEndTime());
+                        slotResponse.setBooked(slot.isBooked());
+                        return slotResponse;
+                    })
+                    .toList();
+
+            response.setAvailableSlots(slotResponses);
+        }
+
+        return response;
+    }
 }

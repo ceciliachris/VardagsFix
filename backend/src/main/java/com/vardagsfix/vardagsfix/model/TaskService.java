@@ -3,6 +3,9 @@ package com.vardagsfix.vardagsfix.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Data
 public class TaskService {
@@ -17,4 +20,7 @@ public class TaskService {
 
     @ManyToOne
     private AppUser user;
+
+    @OneToMany(mappedBy = "taskService", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AvailableSlot> availableSlots = new ArrayList<>();
 }

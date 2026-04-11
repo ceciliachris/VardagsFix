@@ -1,4 +1,7 @@
 package com.vardagsfix.vardagsfix.repository;
 
-public class AvailableSlotRepository {
+import com.vardagsfix.vardagsfix.model.AvailableSlot;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AvailableSlotRepository extends JpaRepository<AvailableSlot, Long> {
 }

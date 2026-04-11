@@ -1,16 +1,13 @@
 package com.vardagsfix.vardagsfix.dto;
 
-import jakarta.validation.constraints.*;
 import lombok.Data;
 
-@NotBlank
-@Email
-@NotNull
-@Positive
-@Future
+import java.util.List;
+
 @Data
 public class TaskServiceRequest {
     private String title;
     private String description;
     private Double price;
+    private List<AvailableSlotRequest> availableSlots;
 }

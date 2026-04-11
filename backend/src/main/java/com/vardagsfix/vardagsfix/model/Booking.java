@@ -22,6 +22,9 @@ public class Booking {
     @Column(nullable = false)
     private BookingStatus status;
 
+    @Column(length = 1000)
+    private String message;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
@@ -29,4 +32,8 @@ public class Booking {
     @ManyToOne
     @JoinColumn(name = "service_id", nullable = false)
     private TaskService taskService;
+
+    @ManyToOne
+    @JoinColumn(name = "available_slot_id")
+    private AvailableSlot availableSlot;
 }

@@ -1,9 +1,11 @@
 package com.vardagsfix.vardagsfix.service;
 
+import com.vardagsfix.vardagsfix.dto.AvailableSlotRequest;
 import com.vardagsfix.vardagsfix.dto.TaskServiceRequest;
 import com.vardagsfix.vardagsfix.exception.ResourceNotFoundException;
 import com.vardagsfix.vardagsfix.exception.UnauthorizedActionException;
 import com.vardagsfix.vardagsfix.model.AppUser;
+import com.vardagsfix.vardagsfix.model.AvailableSlot;
 import com.vardagsfix.vardagsfix.model.BookingStatus;
 import com.vardagsfix.vardagsfix.model.TaskService;
 import com.vardagsfix.vardagsfix.repository.BookingRepository;
@@ -30,11 +32,30 @@ public class ServiceService {
         return serviceRepository.findByUser_Email(email);
     }
 
-    public TaskService createForAuthenticatedUser(TaskService taskService, String email) {
+    public TaskService createForAuthenticatedUser(TaskServiceRequest request, String email) {
         AppUser user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        TaskService taskService = new TaskService();
+        taskService.setTitle(request.getTitle());
+        taskService.setDescription(request.getDescription());
+        taskService.setPrice(request.getPrice());
         taskService.setUser(user);
+
+        if (request.getAvailableSlots() != null) {
+            for (AvailableSlotRequest slotRequest : request.getAvailableSlots()) {
+                validateSlot(slotRequest);
+
+                AvailableSlot slot = new AvailableSlot();
+                slot.setStartTime(slotRequest.getStartTime());
+                slot.setEndTime(slotRequest.getEndTime());
+                slot.setBooked(false);
+                slot.setTaskService(taskService);
+
+                taskService.getAvailableSlots().add(slot);
+            }
+        }
+
         return serviceRepository.save(taskService);
     }
 
@@ -47,6 +68,22 @@ public class ServiceService {
         service.setTitle(request.getTitle());
         service.setDescription(request.getDescription());
         service.setPrice(request.getPrice());
+
+        service.getAvailableSlots().clear();
+
+        if (request.getAvailableSlots() != null) {
+            for (AvailableSlotRequest slotRequest : request.getAvailableSlots()) {
+                validateSlot(slotRequest);
+
+                AvailableSlot slot = new AvailableSlot();
+                slot.setStartTime(slotRequest.getStartTime());
+                slot.setEndTime(slotRequest.getEndTime());
+                slot.setBooked(false);
+                slot.setTaskService(service);
+
+                service.getAvailableSlots().add(slot);
+            }
+        }
 
         return serviceRepository.save(service);
     }
@@ -69,6 +106,16 @@ public class ServiceService {
     private void validateOwner(TaskService service, String email) {
         if (!service.getUser().getEmail().equals(email)) {
             throw new UnauthorizedActionException("You are not allowed to modify this service");
+        }
+    }
+
+    private void validateSlot(AvailableSlotRequest slotRequest) {
+        if (slotRequest.getStartTime() == null || slotRequest.getEndTime() == null) {
+            throw new IllegalArgumentException("Slot start time and end time are required");
+        }
+
+        if (!slotRequest.getStartTime().isBefore(slotRequest.getEndTime())) {
+            throw new IllegalArgumentException("Slot start time must be before end time");
         }
     }
 }

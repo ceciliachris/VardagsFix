@@ -3,11 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { getMyServices, deleteService } from "../api/serviceApi";
 import { ui } from "../styles/ui";
 
+type AvailableSlot = {
+  id: number;
+  startTime: string;
+  endTime: string;
+  booked: boolean;
+};
+
 type ServiceItem = {
   id: number;
   title: string;
   description: string;
   price: number;
+  availableSlots?: AvailableSlot[];
 };
 
 export default function MyServicesPage() {
@@ -100,12 +108,28 @@ export default function MyServicesPage() {
         <div style={ui.list}>
           {services.map((service) => {
             const isDeleting = deletingId === service.id;
+            const totalSlots = service.availableSlots?.length ?? 0;
+            const bookedSlots =
+              service.availableSlots?.filter((slot) => slot.booked).length ?? 0;
+            const availableSlots = totalSlots - bookedSlots;
 
             return (
               <div key={service.id} style={ui.card}>
                 <h2 style={styles.title}>{service.title}</h2>
                 <p style={styles.description}>{service.description}</p>
                 <p style={styles.price}>{service.price} kr</p>
+
+                <p style={styles.slotSummary}>
+                  Upplagda tider: {totalSlots}
+                </p>
+
+                <p style={styles.slotSummary}>
+                  Lediga tider: {availableSlots}
+                </p>
+
+                <p style={styles.slotSummary}>
+                  Bokade tider: {bookedSlots}
+                </p>
 
                 <div style={styles.buttonRow}>
                   <button
@@ -142,13 +166,19 @@ const styles: Record<string, CSSProperties> = {
     color: "#4b5563",
   },
   price: {
-    margin: "0 0 16px 0",
+    margin: "0 0 12px 0",
     fontWeight: 700,
+  },
+  slotSummary: {
+    margin: "0 0 8px 0",
+    color: "#374151",
+    fontWeight: 500,
   },
   buttonRow: {
     display: "flex",
     gap: "10px",
     flexWrap: "wrap",
+    marginTop: "12px",
   },
   editButton: {
     padding: "8px 12px",

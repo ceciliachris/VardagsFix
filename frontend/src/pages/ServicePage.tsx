@@ -4,6 +4,13 @@ import { getAllServices } from "../api/serviceApi";
 import { getToken } from "../utils/storage";
 import { ui } from "../styles/ui";
 
+type AvailableSlot = {
+  id: number;
+  startTime: string;
+  endTime: string;
+  booked: boolean;
+};
+
 type ServiceUser = {
   id: number;
   name: string;
@@ -16,6 +23,7 @@ type ServiceItem = {
   description: string;
   price: number;
   user?: ServiceUser;
+  availableSlots?: AvailableSlot[];
 };
 
 type JwtPayload = {
@@ -161,6 +169,9 @@ export default function ServicesPage() {
             const isOwnService =
               !!currentUserEmail && serviceOwnerEmail === currentUserEmail;
 
+            const availableSlots =
+              service.availableSlots?.filter((slot) => !slot.booked) ?? [];
+
             return (
               <div key={service.id} style={ui.card}>
                 <h2 style={styles.title}>{service.title}</h2>
@@ -175,20 +186,30 @@ export default function ServicesPage() {
                 <p style={styles.email}>{service.user?.email ?? ""}</p>
 
                 {!isOwnService && (
-                  <button
-                    onClick={() =>
-                      navigate(`/bookings/create/${service.id}`)
-                    }
-                    style={styles.bookingButton}
-                  >
-                    Boka
-                  </button>
+                  <>
+                    <p style={styles.slotSummary}>
+                      Lediga tider: {availableSlots.length}
+                    </p>
+
+                    <button
+                      onClick={() => navigate(`/bookings/create/${service.id}`)}
+                      style={styles.bookingButton}
+                    >
+                      Se lediga tider
+                    </button>
+                  </>
                 )}
 
                 {isOwnService && (
-                  <p style={styles.ownServiceText}>
-                    Detta är din egen tjänst.
-                  </p>
+                  <>
+                    <p style={styles.slotSummary}>
+                      Upplagda tider: {service.availableSlots?.length ?? 0}
+                    </p>
+
+                    <p style={styles.ownServiceText}>
+                      Detta är din egen tjänst.
+                    </p>
+                  </>
                 )}
               </div>
             );
@@ -248,9 +269,14 @@ const styles: Record<string, CSSProperties> = {
     color: "#111827",
   },
   email: {
-    margin: "0 0 16px 0",
+    margin: "0 0 12px 0",
     color: "#6b7280",
     fontSize: "14px",
+  },
+  slotSummary: {
+    margin: "0 0 12px 0",
+    color: "#374151",
+    fontWeight: 500,
   },
   bookingButton: {
     padding: "10px 16px",

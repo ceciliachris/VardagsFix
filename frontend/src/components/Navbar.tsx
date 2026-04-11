@@ -51,6 +51,17 @@ export default function Navbar() {
           </NavLink>
 
           <NavLink
+            to="/bookings/my-services"
+            end
+            style={({ isActive }) => ({
+              ...styles.link,
+              ...(isActive ? styles.activeLink : {}),
+            })}
+          >
+            Bokningar på mina tjänster
+          </NavLink>
+
+          <NavLink
             to="/services/create"
             end
             style={({ isActive }) => ({
