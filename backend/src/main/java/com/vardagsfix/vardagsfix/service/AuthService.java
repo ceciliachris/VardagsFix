@@ -20,12 +20,15 @@ public class AuthService {
     }
 
     public AppUser register(AppUser appUser) {
+        appUser.setEmail(appUser.getEmail().trim().toLowerCase());
         appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
         return userRepository.save(appUser);
     }
 
     public String login(String email, String password) {
-        AppUser user = userRepository.findByEmail(email)
+        email = email.trim().toLowerCase();
+
+        AppUser user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {

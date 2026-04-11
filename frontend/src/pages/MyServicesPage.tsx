@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyServices, deleteService } from "../api/serviceApi";
+import { ui } from "../styles/ui";
 
 type ServiceItem = {
   id: number;
@@ -15,12 +16,18 @@ export default function MyServicesPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const data = await getMyServices();
-        setServices(data);
+
+        if (Array.isArray(data)) {
+          setServices(data);
+        } else {
+          setError("Ogiltigt svar från servern.");
+        }
       } catch (err: any) {
         console.error(err);
 
@@ -30,6 +37,8 @@ export default function MyServicesPage() {
           message = err.response.data;
         } else if (typeof err?.response?.data?.message === "string") {
           message = err.response.data.message;
+        } else if (typeof err?.message === "string") {
+          message = err.message;
         }
 
         setError(message);
@@ -41,117 +50,90 @@ export default function MyServicesPage() {
     fetchServices();
   }, []);
 
-  if (loading) {
-    return <p style={styles.message}>Laddar...</p>;
-  }
-
   const handleDelete = async (id: number) => {
-    if (!confirm("Är du säker på att du vill ta bort tjänsten?")) {
+    const confirmed = window.confirm("Är du säker på att du vill ta bort tjänsten?");
+    if (!confirmed) {
       return;
     }
 
+    setDeletingId(id);
+
     try {
       await deleteService(id);
-
       setServices((prev) => prev.filter((s) => s.id !== id));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Kunde inte ta bort tjänsten.");
+
+      let message = "Kunde inte ta bort tjänsten.";
+
+      if (typeof err?.response?.data === "string") {
+        message = err.response.data;
+      } else if (typeof err?.response?.data?.message === "string") {
+        message = err.response.data.message;
+      } else if (typeof err?.message === "string") {
+        message = err.message;
+      }
+
+      alert(message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  return (
-    <div style={styles.wrapper}>
-      <div style={styles.topBar}>
-        <h1>Mina tjänster</h1>
+  if (loading) {
+    return <p style={ui.message}>Laddar...</p>;
+  }
 
-        <button
-          onClick={() => navigate("/services")}
-          style={styles.backButton}
-        >
-          Tillbaka
-        </button>
+  return (
+    <div style={ui.pageWrapper}>
+      <div style={ui.topBar}>
+        <h1>Mina tjänster</h1>
       </div>
 
-      {error && <p style={styles.error}>{error}</p>}
+      {error && <p style={ui.error}>{error}</p>}
 
       {!error && services.length === 0 && (
-        <p>Du har inte skapat några tjänster ännu.</p>
+        <p style={ui.message}>Du har inte skapat några tjänster ännu.</p>
       )}
 
       {!error && services.length > 0 && (
-        <div style={styles.list}>
-          {services.map((service) => (
-            <div key={service.id} style={styles.card}>
-              <h2 style={styles.title}>{service.title}</h2>
-              <p style={styles.description}>{service.description}</p>
-              <p style={styles.price}>{service.price} kr</p>
-              <button
-                onClick={() => navigate(`/services/edit/${service.id}`)}
-                style={styles.editButton}
-              >
-                Redigera
-              </button>
-              <button
-                onClick={() => handleDelete(service.id)}
-                style={styles.deleteButton}
-              >
-                Ta bort
-              </button>
-            </div>
-          ))}
+        <div style={ui.list}>
+          {services.map((service) => {
+            const isDeleting = deletingId === service.id;
+
+            return (
+              <div key={service.id} style={ui.card}>
+                <h2 style={styles.title}>{service.title}</h2>
+                <p style={styles.description}>{service.description}</p>
+                <p style={styles.price}>{service.price} kr</p>
+
+                <div style={styles.buttonRow}>
+                  <button
+                    onClick={() => navigate(`/services/edit/${service.id}`)}
+                    style={styles.editButton}
+                    disabled={isDeleting}
+                  >
+                    Redigera
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(service.id)}
+                    style={styles.deleteButton}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Tar bort..." : "Ta bort"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  editButton: {
-  marginTop: "10px",
-  marginRight: "10px",
-  padding: "8px 12px",
-  border: "none",
-  borderRadius: "6px",
-  background: "#fcc86e",
-  cursor: "pointer",
-},
-  deleteButton: {
-    marginTop: "10px",
-    padding: "8px 12px",
-    border: "none",
-    borderRadius: "6px",
-    background: "#f84e4e",
-    cursor: "pointer",
-  },
-  wrapper: {
-    maxWidth: "900px",
-    margin: "0 auto",
-    padding: "32px",
-  },
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "24px",
-  },
-  backButton: {
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#b1b6c0",
-    cursor: "pointer",
-  },
-  list: {
-    display: "grid",
-    gap: "16px",
-  },
-  card: {
-    background: "#ffffff",
-    borderRadius: "12px",
-    padding: "20px",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-  },
+const styles: Record<string, CSSProperties> = {
   title: {
     margin: "0 0 8px 0",
   },
@@ -160,13 +142,27 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#4b5563",
   },
   price: {
-    margin: 0,
+    margin: "0 0 16px 0",
     fontWeight: 700,
   },
-  message: {
-    padding: "24px",
+  buttonRow: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
   },
-  error: {
-    color: "#c62828",
+  editButton: {
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "6px",
+    background: "#fcc86e",
+    cursor: "pointer",
+  },
+  deleteButton: {
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "6px",
+    background: "#f84e4e",
+    cursor: "pointer",
+    color: "#ffffff",
   },
 };

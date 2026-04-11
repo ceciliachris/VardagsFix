@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { createService } from "../api/serviceApi";
+import { ui } from "../styles/ui";
 
 export default function CreateServicePage() {
   const navigate = useNavigate();
@@ -12,16 +13,41 @@ export default function CreateServicePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+    const numericPrice = Number(price);
+
+    if (!trimmedTitle) {
+      setError("Titel måste fyllas i.");
+      return;
+    }
+
+    if (!trimmedDescription) {
+      setError("Beskrivning måste fyllas i.");
+      return;
+    }
+
+    if (Number.isNaN(numericPrice)) {
+      setError("Pris måste vara ett giltigt nummer.");
+      return;
+    }
+
+    if (numericPrice <= 0) {
+      setError("Pris måste vara större än 0.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       await createService({
-        title,
-        description,
-        price: Number(price),
+        title: trimmedTitle,
+        description: trimmedDescription,
+        price: numericPrice,
       });
 
       navigate("/services");
@@ -34,6 +60,8 @@ export default function CreateServicePage() {
         message = err.response.data;
       } else if (typeof err?.response?.data?.message === "string") {
         message = err.response.data.message;
+      } else if (typeof err?.message === "string") {
+        message = err.message;
       }
 
       setError(message);
@@ -43,15 +71,15 @@ export default function CreateServicePage() {
   };
 
   return (
-    <div style={styles.wrapper}>
-      <form onSubmit={handleSubmit} style={styles.form}>
+    <div style={ui.formWrapper}>
+      <form onSubmit={handleSubmit} style={ui.formCard}>
         <h1>Skapa tjänst</h1>
 
         <input
           placeholder="Titel"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={styles.input}
+          style={ui.input}
           required
         />
 
@@ -59,7 +87,7 @@ export default function CreateServicePage() {
           placeholder="Beskrivning"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          style={styles.input}
+          style={ui.textarea}
           required
         />
 
@@ -68,44 +96,28 @@ export default function CreateServicePage() {
           placeholder="Pris"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          style={styles.input}
+          style={ui.input}
+          min="1"
           required
         />
 
-        <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? "Sparar..." : "Skapa"}
-        </button>
+        <div style={ui.buttonRow}>
+          <button type="submit" disabled={loading} style={ui.primaryBlueButton}>
+            {loading ? "Sparar..." : "Skapa"}
+          </button>
 
-        {error && <p style={styles.error}>{error}</p>}
+          <button
+            type="button"
+            onClick={() => navigate("/services")}
+            disabled={loading}
+            style={ui.secondaryButton}
+          >
+            Avbryt
+          </button>
+        </div>
+
+        {error && <p style={ui.error}>{error}</p>}
       </form>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  wrapper: {
-    maxWidth: "500px",
-    margin: "0 auto",
-    padding: "32px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  input: {
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    padding: "10px",
-    border: "none",
-    borderRadius: "6px",
-    background: "#2563eb",
-    color: "#fff",
-  },
-  error: {
-    color: "red",
-  },
-};

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createBooking } from "../api/bookingApi";
+import { ui } from "../styles/ui";
 
 export default function CreateBookingPage() {
   const { id } = useParams();
@@ -9,13 +10,44 @@ export default function CreateBookingPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!id) {
+      setError("Tjänstens id saknas.");
+      return;
+    }
+
+    if (!startTime) {
+      setError("Starttid måste fyllas i.");
+      return;
+    }
+
+    if (!endTime) {
+      setError("Sluttid måste fyllas i.");
+      return;
+    }
+
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      setError("Ogiltigt datum eller tid.");
+      return;
+    }
+
+    if (endDate <= startDate) {
+      setError("Sluttid måste vara efter starttid.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       await createBooking({
@@ -37,72 +69,57 @@ export default function CreateBookingPage() {
         message = err.response.data;
       } else if (typeof err?.response?.data?.message === "string") {
         message = err.response.data.message;
+      } else if (typeof err?.message === "string") {
+        message = err.message;
       }
 
       setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={styles.wrapper}>
-      <form onSubmit={handleSubmit} style={styles.form}>
+    <div style={ui.formWrapper}>
+      <form onSubmit={handleSubmit} style={ui.formCard}>
         <h1>Boka tjänst</h1>
 
-        <label>Starttid</label>
+        <label style={{ fontWeight: 600, color: "#111827" }}>Starttid</label>
         <input
           type="datetime-local"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
-          style={styles.input}
+          style={ui.input}
           required
         />
 
-        <label>Sluttid</label>
+        <label style={{ fontWeight: 600, color: "#111827" }}>Sluttid</label>
         <input
           type="datetime-local"
           value={endTime}
           onChange={(e) => setEndTime(e.target.value)}
-          style={styles.input}
+          style={ui.input}
           required
         />
 
-        <button style={styles.button}>Boka</button>
+        <div style={ui.buttonRow}>
+          <button type="submit" disabled={loading} style={ui.primaryGreenButton}>
+            {loading ? "Bokar..." : "Boka"}
+          </button>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.success}>{success}</p>}
+          <button
+            type="button"
+            onClick={() => navigate("/services")}
+            disabled={loading}
+            style={ui.secondaryButton}
+          >
+            Avbryt
+          </button>
+        </div>
+
+        {error && <p style={ui.error}>{error}</p>}
+        {success && <p style={ui.success}>{success}</p>}
       </form>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  wrapper: {
-    maxWidth: "500px",
-    margin: "0 auto",
-    padding: "32px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  input: {
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    padding: "10px",
-    background: "#22c55e",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-  },
-  success: {
-    color: "green",
-  },
-};

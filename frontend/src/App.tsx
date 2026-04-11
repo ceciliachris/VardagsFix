@@ -8,19 +8,25 @@ import MyServicesPage from "./pages/MyServicesPage";
 import EditServicePage from "./pages/EditServicePage";
 import CreateBookingPage from "./pages/CreateBookingPage";
 import MyBookingsPage from "./pages/MyBookingsPage";
+import Layout from "./components/Layout";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* PUBLIC ROUTES */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+
+        {/* PROTECTED ROUTES MED LAYOUT */}
 
         <Route
           path="/services"
           element={
             <ProtectedRoute>
-              <ServicesPage />
+              <Layout>
+                <ServicesPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -29,7 +35,9 @@ function App() {
           path="/services/create"
           element={
             <ProtectedRoute>
-              <CreateServicePage />
+              <Layout>
+                <CreateServicePage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -38,7 +46,9 @@ function App() {
           path="/services/my"
           element={
             <ProtectedRoute>
-              <MyServicesPage />
+              <Layout>
+                <MyServicesPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -47,7 +57,9 @@ function App() {
           path="/services/edit/:id"
           element={
             <ProtectedRoute>
-              <EditServicePage />
+              <Layout>
+                <EditServicePage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -56,7 +68,9 @@ function App() {
           path="/bookings/create/:id"
           element={
             <ProtectedRoute>
-              <CreateBookingPage />
+              <Layout>
+                <CreateBookingPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -65,7 +79,9 @@ function App() {
           path="/bookings/my"
           element={
             <ProtectedRoute>
-              <MyBookingsPage />
+              <Layout>
+                <MyBookingsPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
