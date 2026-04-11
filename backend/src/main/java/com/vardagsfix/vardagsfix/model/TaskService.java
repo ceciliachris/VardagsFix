@@ -17,6 +17,7 @@ public class TaskService {
     private String title;
     private String description;
     private Double price;
+    private String location;
 
     @ManyToOne
     private AppUser user;

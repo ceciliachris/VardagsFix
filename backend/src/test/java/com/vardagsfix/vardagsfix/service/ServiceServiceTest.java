@@ -1,10 +1,14 @@
 package com.vardagsfix.vardagsfix.service;
 
+import com.vardagsfix.vardagsfix.dto.AvailableSlotRequest;
 import com.vardagsfix.vardagsfix.dto.TaskServiceRequest;
 import com.vardagsfix.vardagsfix.exception.ResourceNotFoundException;
 import com.vardagsfix.vardagsfix.exception.UnauthorizedActionException;
 import com.vardagsfix.vardagsfix.model.AppUser;
+import com.vardagsfix.vardagsfix.model.AvailableSlot;
+import com.vardagsfix.vardagsfix.model.BookingStatus;
 import com.vardagsfix.vardagsfix.model.TaskService;
+import com.vardagsfix.vardagsfix.repository.BookingRepository;
 import com.vardagsfix.vardagsfix.repository.ServiceRepository;
 import com.vardagsfix.vardagsfix.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +18,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +34,9 @@ class ServiceServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private ServiceService serviceService;
@@ -48,43 +58,106 @@ class ServiceServiceTest {
         taskService.setDescription("Original beskrivning");
         taskService.setPrice(300.0);
         taskService.setUser(owner);
+        taskService.setAvailableSlots(new ArrayList<>());
 
         request = new TaskServiceRequest();
         request.setTitle("Ny titel");
         request.setDescription("Ny beskrivning");
         request.setPrice(500.0);
+        request.setAvailableSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 1, 10, 0),
+                        LocalDateTime.of(2026, 5, 1, 11, 0)
+                )
+        ));
     }
 
     @Test
-    void createForAuthenticatedUser_shouldAttachUserAndSave() {
-        TaskService newService = new TaskService();
-        newService.setTitle("Hundpromenad");
-        newService.setDescription("Promenerar hund");
-        newService.setPrice(200.0);
+    void createForAuthenticatedUser_shouldAttachUserSlotsAndSave() {
+        TaskServiceRequest createRequest = new TaskServiceRequest();
+        createRequest.setTitle("Hundpromenad");
+        createRequest.setDescription("Promenerar hund");
+        createRequest.setPrice(200.0);
+        createRequest.setAvailableSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 2, 9, 0),
+                        LocalDateTime.of(2026, 5, 2, 10, 0)
+                ),
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 3, 14, 0),
+                        LocalDateTime.of(2026, 5, 3, 15, 0)
+                )
+        ));
 
         when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(owner));
         when(serviceRepository.save(any(TaskService.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TaskService saved = serviceService.createForAuthenticatedUser(newService, "cecilia@test.com");
+        TaskService saved = serviceService.createForAuthenticatedUser(createRequest, "cecilia@test.com");
 
         assertEquals(owner, saved.getUser());
         assertEquals("Hundpromenad", saved.getTitle());
-        verify(serviceRepository).save(newService);
+        assertEquals("Promenerar hund", saved.getDescription());
+        assertEquals(200.0, saved.getPrice());
+        assertEquals(2, saved.getAvailableSlots().size());
+        assertFalse(saved.getAvailableSlots().get(0).isBooked());
+        assertEquals(saved, saved.getAvailableSlots().get(0).getTaskService());
+
+        verify(serviceRepository).save(any(TaskService.class));
     }
 
     @Test
     void createForAuthenticatedUser_shouldThrowNotFound_whenUserDoesNotExist() {
-        TaskService newService = new TaskService();
         when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class,
-                () -> serviceService.createForAuthenticatedUser(newService, "cecilia@test.com"));
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> serviceService.createForAuthenticatedUser(request, "cecilia@test.com")
+        );
 
         verify(serviceRepository, never()).save(any());
     }
 
     @Test
-    void update_shouldUpdateService_whenUserIsOwner() {
+    void createForAuthenticatedUser_shouldThrowIllegalArgumentException_whenSlotHasInvalidTimeRange() {
+        TaskServiceRequest createRequest = new TaskServiceRequest();
+        createRequest.setTitle("Hundpromenad");
+        createRequest.setDescription("Promenerar hund");
+        createRequest.setPrice(200.0);
+        createRequest.setAvailableSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 2, 10, 0),
+                        LocalDateTime.of(2026, 5, 2, 9, 0)
+                )
+        ));
+
+        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(owner));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.createForAuthenticatedUser(createRequest, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void update_shouldUpdateServiceAndReplaceUnbookedSlots_whenUserIsOwner() {
+        AvailableSlot bookedSlot = new AvailableSlot();
+        bookedSlot.setId(100L);
+        bookedSlot.setStartTime(LocalDateTime.of(2026, 5, 4, 10, 0));
+        bookedSlot.setEndTime(LocalDateTime.of(2026, 5, 4, 11, 0));
+        bookedSlot.setBooked(true);
+        bookedSlot.setTaskService(taskService);
+
+        AvailableSlot unbookedSlot = new AvailableSlot();
+        unbookedSlot.setId(101L);
+        unbookedSlot.setStartTime(LocalDateTime.of(2026, 5, 5, 10, 0));
+        unbookedSlot.setEndTime(LocalDateTime.of(2026, 5, 5, 11, 0));
+        unbookedSlot.setBooked(false);
+        unbookedSlot.setTaskService(taskService);
+
+        taskService.setAvailableSlots(new ArrayList<>(List.of(bookedSlot, unbookedSlot)));
+
         when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
         when(serviceRepository.save(any(TaskService.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -93,6 +166,15 @@ class ServiceServiceTest {
         assertEquals("Ny titel", updated.getTitle());
         assertEquals("Ny beskrivning", updated.getDescription());
         assertEquals(500.0, updated.getPrice());
+
+        assertEquals(2, updated.getAvailableSlots().size());
+        assertTrue(updated.getAvailableSlots().stream().anyMatch(AvailableSlot::isBooked));
+        assertTrue(updated.getAvailableSlots().stream().anyMatch(slot ->
+                !slot.isBooked()
+                        && slot.getStartTime().equals(LocalDateTime.of(2026, 5, 1, 10, 0))
+                        && slot.getEndTime().equals(LocalDateTime.of(2026, 5, 1, 11, 0))
+        ));
+
         verify(serviceRepository).save(taskService);
     }
 
@@ -100,8 +182,10 @@ class ServiceServiceTest {
     void update_shouldThrowUnauthorized_whenUserIsNotOwner() {
         when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
 
-        assertThrows(UnauthorizedActionException.class,
-                () -> serviceService.update(10L, request, "annan@test.com"));
+        assertThrows(
+                UnauthorizedActionException.class,
+                () -> serviceService.update(10L, request, "annan@test.com")
+        );
 
         verify(serviceRepository, never()).save(any());
     }
@@ -110,15 +194,41 @@ class ServiceServiceTest {
     void update_shouldThrowNotFound_whenServiceDoesNotExist() {
         when(serviceRepository.findById(10L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class,
-                () -> serviceService.update(10L, request, "cecilia@test.com"));
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> serviceService.update(10L, request, "cecilia@test.com")
+        );
 
         verify(serviceRepository, never()).save(any());
     }
 
     @Test
-    void delete_shouldDeleteService_whenUserIsOwner() {
+    void update_shouldThrowIllegalArgumentException_whenNewSlotHasInvalidTimeRange() {
+        TaskServiceRequest invalidRequest = new TaskServiceRequest();
+        invalidRequest.setTitle("Ny titel");
+        invalidRequest.setDescription("Ny beskrivning");
+        invalidRequest.setPrice(500.0);
+        invalidRequest.setAvailableSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 10, 12, 0),
+                        LocalDateTime.of(2026, 5, 10, 11, 0)
+                )
+        ));
+
         when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.update(10L, invalidRequest, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void delete_shouldDeleteService_whenUserIsOwnerAndNoActiveBookings() {
+        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
+        when(bookingRepository.existsByTaskServiceIdAndStatus(10L, BookingStatus.BOOKED)).thenReturn(false);
 
         serviceService.delete(10L, "cecilia@test.com");
 
@@ -129,8 +239,10 @@ class ServiceServiceTest {
     void delete_shouldThrowUnauthorized_whenUserIsNotOwner() {
         when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
 
-        assertThrows(UnauthorizedActionException.class,
-                () -> serviceService.delete(10L, "annan@test.com"));
+        assertThrows(
+                UnauthorizedActionException.class,
+                () -> serviceService.delete(10L, "annan@test.com")
+        );
 
         verify(serviceRepository, never()).delete(any());
     }
@@ -139,9 +251,31 @@ class ServiceServiceTest {
     void delete_shouldThrowNotFound_whenServiceDoesNotExist() {
         when(serviceRepository.findById(10L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class,
-                () -> serviceService.delete(10L, "cecilia@test.com"));
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> serviceService.delete(10L, "cecilia@test.com")
+        );
 
         verify(serviceRepository, never()).delete(any());
+    }
+
+    @Test
+    void delete_shouldThrowIllegalArgumentException_whenServiceHasActiveBookings() {
+        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
+        when(bookingRepository.existsByTaskServiceIdAndStatus(10L, BookingStatus.BOOKED)).thenReturn(true);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.delete(10L, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).delete(any());
+    }
+
+    private AvailableSlotRequest createSlotRequest(LocalDateTime startTime, LocalDateTime endTime) {
+        AvailableSlotRequest slotRequest = new AvailableSlotRequest();
+        slotRequest.setStartTime(startTime);
+        slotRequest.setEndTime(endTime);
+        return slotRequest;
     }
 }

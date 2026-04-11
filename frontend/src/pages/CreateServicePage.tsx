@@ -14,6 +14,7 @@ export default function CreateServicePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [location, setLocation] = useState("");
 
   const [slotStartTime, setSlotStartTime] = useState("");
   const [slotEndTime, setSlotEndTime] = useState("");
@@ -72,6 +73,7 @@ export default function CreateServicePage() {
 
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
+    const trimmedLocation = location.trim();
     const numericPrice = Number(price);
 
     if (!trimmedTitle) {
@@ -81,6 +83,11 @@ export default function CreateServicePage() {
 
     if (!trimmedDescription) {
       setError("Beskrivning måste fyllas i.");
+      return;
+    }
+
+    if (!trimmedLocation) {
+      setError("Plats måste fyllas i.");
       return;
     }
 
@@ -106,6 +113,7 @@ export default function CreateServicePage() {
         title: trimmedTitle,
         description: trimmedDescription,
         price: numericPrice,
+        location: trimmedLocation,
         availableSlots,
       });
 
@@ -147,6 +155,14 @@ export default function CreateServicePage() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           style={ui.textarea}
+          required
+        />
+
+        <input
+          placeholder="Plats, t.ex. Malmö eller Södermalm"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          style={ui.input}
           required
         />
 

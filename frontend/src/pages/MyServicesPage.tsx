@@ -15,6 +15,7 @@ type ServiceItem = {
   title: string;
   description: string;
   price: number;
+  location: string;
   availableSlots?: AvailableSlot[];
 };
 
@@ -118,6 +119,7 @@ export default function MyServicesPage() {
                 <h2 style={styles.title}>{service.title}</h2>
                 <p style={styles.description}>{service.description}</p>
                 <p style={styles.price}>{service.price} kr</p>
+                <p style={styles.location}>Plats: {service.location}</p>
 
                 <p style={styles.slotSummary}>
                   Upplagda tider: {totalSlots}
@@ -168,6 +170,11 @@ const styles: Record<string, CSSProperties> = {
   price: {
     margin: "0 0 12px 0",
     fontWeight: 700,
+  },
+  location: {
+    margin: "0 0 12px 0",
+    color: "#374151",
+    fontWeight: 500,
   },
   slotSummary: {
     margin: "0 0 8px 0",

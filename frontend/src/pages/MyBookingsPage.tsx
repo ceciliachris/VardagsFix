@@ -59,11 +59,21 @@ function getStatusLabel(status: string) {
   }
 }
 
+function isArchivedBooking(booking: BookingItem) {
+  const isCancelled = booking.status === "CANCELLED";
+  const endDate = new Date(booking.endTime);
+  const hasPassed =
+    !Number.isNaN(endDate.getTime()) && endDate.getTime() < Date.now();
+
+  return isCancelled || hasPassed;
+}
+
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -121,6 +131,9 @@ export default function MyBookingsPage() {
     }
   };
 
+  const activeBookings = bookings.filter((booking) => !isArchivedBooking(booking));
+  const archivedBookings = bookings.filter((booking) => isArchivedBooking(booking));
+
   if (loading) {
     return <p style={ui.message}>Laddar bokningar...</p>;
   }
@@ -138,65 +151,164 @@ export default function MyBookingsPage() {
       )}
 
       {!error && bookings.length > 0 && (
-        <div style={ui.list}>
-          {bookings.map((booking) => {
-            const isCancelled = booking.status === "CANCELLED";
-            const isCancelling = cancellingId === booking.id;
+        <>
+          <div style={styles.sectionHeader}>
+            <h2 style={styles.sectionTitle}>
+              Aktiva bokningar ({activeBookings.length})
+            </h2>
+          </div>
 
-            return (
-              <div key={booking.id} style={ui.card}>
-                <h2 style={styles.title}>{booking.service.title}</h2>
-                <p style={styles.description}>{booking.service.description}</p>
-                <p style={styles.price}>{booking.service.price} kr</p>
+          {activeBookings.length === 0 ? (
+            <p style={ui.message}>Du har inga aktiva bokningar.</p>
+          ) : (
+            <div style={ui.list}>
+              {activeBookings.map((booking) => {
+                const isCancelling = cancellingId === booking.id;
 
-                <p style={styles.owner}>
-                  Erbjuds av: <strong>{booking.service.user.name}</strong>
-                </p>
+                return (
+                  <div key={booking.id} style={ui.card}>
+                    <h2 style={styles.title}>{booking.service.title}</h2>
+                    <p style={styles.description}>{booking.service.description}</p>
+                    <p style={styles.price}>{booking.service.price} kr</p>
 
-                <p style={styles.email}>{booking.service.user.email}</p>
+                    <p style={styles.owner}>
+                      Erbjuds av: <strong>{booking.service.user.name}</strong>
+                    </p>
 
-                <p style={styles.bookingTime}>
-                  <strong>Start:</strong> {formatDateTime(booking.startTime)}
-                </p>
+                    <p style={styles.email}>{booking.service.user.email}</p>
 
-                <p style={styles.bookingTime}>
-                  <strong>Slut:</strong> {formatDateTime(booking.endTime)}
-                </p>
+                    <p style={styles.bookingTime}>
+                      <strong>Start:</strong> {formatDateTime(booking.startTime)}
+                    </p>
 
-                {booking.message && (
-                  <p style={styles.messageText}>
-                    <strong>Meddelande:</strong> {booking.message}
-                  </p>
-                )}
+                    <p style={styles.bookingTime}>
+                      <strong>Slut:</strong> {formatDateTime(booking.endTime)}
+                    </p>
 
-                <p
-                  style={{
-                    ...styles.status,
-                    color: isCancelled ? "#dc2626" : "#15803d",
-                  }}
-                >
-                  Status: {getStatusLabel(booking.status)}
-                </p>
+                    {booking.message && (
+                      <p style={styles.messageText}>
+                        <strong>Meddelande:</strong> {booking.message}
+                      </p>
+                    )}
 
-                {!isCancelled && (
-                  <button
-                    onClick={() => handleCancel(booking.id)}
-                    style={styles.cancelButton}
-                    disabled={isCancelling}
-                  >
-                    {isCancelling ? "Avbokar..." : "Avboka"}
-                  </button>
-                )}
+                    <p
+                      style={{
+                        ...styles.status,
+                        color: "#15803d",
+                      }}
+                    >
+                      Status: {getStatusLabel(booking.status)}
+                    </p>
+
+                    <button
+                      onClick={() => handleCancel(booking.id)}
+                      style={styles.cancelButton}
+                      disabled={isCancelling}
+                    >
+                      {isCancelling ? "Avbokar..." : "Avboka"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div style={styles.archiveToggleWrapper}>
+            <button
+              type="button"
+              onClick={() => setShowArchived((prev) => !prev)}
+              style={styles.archiveToggleButton}
+            >
+              {showArchived ? "Dölj arkiverade" : "Visa arkiverade"} (
+              {archivedBookings.length})
+            </button>
+          </div>
+
+          {showArchived && (
+            <>
+              <div style={styles.sectionHeader}>
+                <h2 style={styles.sectionTitle}>
+                  Arkiverade bokningar ({archivedBookings.length})
+                </h2>
               </div>
-            );
-          })}
-        </div>
+
+              {archivedBookings.length === 0 ? (
+                <p style={ui.message}>Det finns inga arkiverade bokningar.</p>
+              ) : (
+                <div style={ui.list}>
+                  {archivedBookings.map((booking) => {
+                    const isCancelled = booking.status === "CANCELLED";
+
+                    return (
+                      <div key={booking.id} style={ui.card}>
+                        <h2 style={styles.title}>{booking.service.title}</h2>
+                        <p style={styles.description}>
+                          {booking.service.description}
+                        </p>
+                        <p style={styles.price}>{booking.service.price} kr</p>
+
+                        <p style={styles.owner}>
+                          Erbjuds av: <strong>{booking.service.user.name}</strong>
+                        </p>
+
+                        <p style={styles.email}>{booking.service.user.email}</p>
+
+                        <p style={styles.bookingTime}>
+                          <strong>Start:</strong> {formatDateTime(booking.startTime)}
+                        </p>
+
+                        <p style={styles.bookingTime}>
+                          <strong>Slut:</strong> {formatDateTime(booking.endTime)}
+                        </p>
+
+                        {booking.message && (
+                          <p style={styles.messageText}>
+                            <strong>Meddelande:</strong> {booking.message}
+                          </p>
+                        )}
+
+                        <p
+                          style={{
+                            ...styles.status,
+                            color: isCancelled ? "#dc2626" : "#6b7280",
+                          }}
+                        >
+                          Status: {getStatusLabel(booking.status)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
 }
 
 const styles: Record<string, CSSProperties> = {
+  sectionHeader: {
+    marginBottom: "12px",
+  },
+  sectionTitle: {
+    margin: 0,
+    fontSize: "20px",
+  },
+  archiveToggleWrapper: {
+    marginTop: "24px",
+    marginBottom: "16px",
+  },
+  archiveToggleButton: {
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    background: "#ffffff",
+    color: "#111827",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
   title: {
     margin: "0 0 8px 0",
   },

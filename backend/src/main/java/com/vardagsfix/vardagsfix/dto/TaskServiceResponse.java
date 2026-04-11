@@ -10,6 +10,7 @@ public class TaskServiceResponse {
     private String title;
     private String description;
     private Double price;
+    private String location;
     private UserResponse user;
     private List<AvailableSlotResponse> availableSlots;
 }

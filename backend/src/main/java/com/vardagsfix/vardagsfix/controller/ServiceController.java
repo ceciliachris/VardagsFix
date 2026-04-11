@@ -72,6 +72,7 @@ public class ServiceController {
         response.setTitle(taskService.getTitle());
         response.setDescription(taskService.getDescription());
         response.setPrice(taskService.getPrice());
+        response.setLocation(taskService.getLocation());
 
         if (taskService.getUser() != null) {
             UserResponse userResponse = new UserResponse();

@@ -14,6 +14,7 @@ import com.vardagsfix.vardagsfix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -40,6 +41,7 @@ public class ServiceService {
         taskService.setTitle(request.getTitle());
         taskService.setDescription(request.getDescription());
         taskService.setPrice(request.getPrice());
+        taskService.setLocation(request.getLocation());
         taskService.setUser(user);
 
         if (request.getAvailableSlots() != null) {
@@ -68,8 +70,15 @@ public class ServiceService {
         service.setTitle(request.getTitle());
         service.setDescription(request.getDescription());
         service.setPrice(request.getPrice());
+        service.setLocation(request.getLocation());
 
-        service.getAvailableSlots().clear();
+        List<AvailableSlot> existingSlots = service.getAvailableSlots();
+
+        List<AvailableSlot> bookedSlots = existingSlots.stream()
+                .filter(AvailableSlot::isBooked)
+                .toList();
+
+        List<AvailableSlot> newSlots = new ArrayList<>();
 
         if (request.getAvailableSlots() != null) {
             for (AvailableSlotRequest slotRequest : request.getAvailableSlots()) {
@@ -81,9 +90,15 @@ public class ServiceService {
                 slot.setBooked(false);
                 slot.setTaskService(service);
 
-                service.getAvailableSlots().add(slot);
+                newSlots.add(slot);
             }
         }
+
+        List<AvailableSlot> finalSlots = new ArrayList<>();
+        finalSlots.addAll(bookedSlots);
+        finalSlots.addAll(newSlots);
+
+        service.setAvailableSlots(finalSlots);
 
         return serviceRepository.save(service);
     }

@@ -22,6 +22,7 @@ type ServiceItem = {
   title: string;
   description: string;
   price: number;
+  location: string;
   user?: ServiceUser;
   availableSlots?: AvailableSlot[];
 };
@@ -93,11 +94,13 @@ export default function ServicesPage() {
       const title = service.title?.toLowerCase() ?? "";
       const description = service.description?.toLowerCase() ?? "";
       const ownerName = service.user?.name?.toLowerCase() ?? "";
+      const location = service.location?.toLowerCase() ?? "";
 
       return (
         title.includes(normalizedSearch) ||
         description.includes(normalizedSearch) ||
-        ownerName.includes(normalizedSearch)
+        ownerName.includes(normalizedSearch) ||
+        location.includes(normalizedSearch)
       );
     });
 
@@ -132,7 +135,7 @@ export default function ServicesPage() {
       <div style={styles.filterSection}>
         <input
           type="text"
-          placeholder="Sök tjänst, beskrivning eller användare"
+          placeholder="Sök tjänst, beskrivning, plats eller användare"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={styles.searchInput}
@@ -177,6 +180,7 @@ export default function ServicesPage() {
                 <h2 style={styles.title}>{service.title}</h2>
                 <p style={styles.description}>{service.description}</p>
                 <p style={styles.price}>{service.price} kr</p>
+                <p style={styles.location}>Plats: {service.location}</p>
 
                 <p style={styles.owner}>
                   Erbjuds av:{" "}
@@ -263,6 +267,11 @@ const styles: Record<string, CSSProperties> = {
   price: {
     margin: "0 0 10px 0",
     fontWeight: 700,
+  },
+  location: {
+    margin: "0 0 10px 0",
+    color: "#374151",
+    fontWeight: 500,
   },
   owner: {
     margin: "0 0 4px 0",

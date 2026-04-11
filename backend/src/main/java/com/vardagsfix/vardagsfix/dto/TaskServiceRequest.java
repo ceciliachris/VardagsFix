@@ -9,5 +9,6 @@ public class TaskServiceRequest {
     private String title;
     private String description;
     private Double price;
+    private String location;
     private List<AvailableSlotRequest> availableSlots;
 }

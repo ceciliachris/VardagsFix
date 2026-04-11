@@ -9,6 +9,7 @@ type TaskServiceRequest = {
   title: string;
   description: string;
   price: number;
+  location: string;
   availableSlots?: AvailableSlotRequest[];
 };
 

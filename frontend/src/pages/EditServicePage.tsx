@@ -15,6 +15,7 @@ type ServiceItem = {
   title: string;
   description: string;
   price: number;
+  location: string;
   availableSlots?: AvailableSlot[];
 };
 
@@ -63,6 +64,7 @@ export default function EditServicePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [location, setLocation] = useState("");
 
   const [slotStartTime, setSlotStartTime] = useState("");
   const [slotEndTime, setSlotEndTime] = useState("");
@@ -86,6 +88,7 @@ export default function EditServicePage() {
         setTitle(service.title);
         setDescription(service.description);
         setPrice(service.price.toString());
+        setLocation(service.location ?? "");
 
         const mappedSlots =
           service.availableSlots?.map((slot) => ({
@@ -175,6 +178,7 @@ export default function EditServicePage() {
 
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
+    const trimmedLocation = location.trim();
     const numericPrice = Number(price);
 
     if (!trimmedTitle) {
@@ -184,6 +188,11 @@ export default function EditServicePage() {
 
     if (!trimmedDescription) {
       setError("Beskrivning måste fyllas i.");
+      return;
+    }
+
+    if (!trimmedLocation) {
+      setError("Plats måste fyllas i.");
       return;
     }
 
@@ -227,6 +236,7 @@ export default function EditServicePage() {
         title: trimmedTitle,
         description: trimmedDescription,
         price: numericPrice,
+        location: trimmedLocation,
         availableSlots: [
           ...bookedSlots.map((slot) => ({
             startTime: slot.startTime,
@@ -281,6 +291,14 @@ export default function EditServicePage() {
           onChange={(e) => setDescription(e.target.value)}
           style={ui.textarea}
           placeholder="Beskrivning"
+          required
+        />
+
+        <input
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          style={ui.input}
+          placeholder="Plats, t.ex. Malmö eller Södermalm"
           required
         />
 
