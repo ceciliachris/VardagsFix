@@ -2,6 +2,7 @@ package com.vardagsfix.vardagsfix.controller;
 
 import com.vardagsfix.vardagsfix.dto.BookingRequest;
 import com.vardagsfix.vardagsfix.dto.BookingResponse;
+import com.vardagsfix.vardagsfix.dto.TaskServiceResponse;
 import com.vardagsfix.vardagsfix.dto.UserResponse;
 import com.vardagsfix.vardagsfix.model.Booking;
 import com.vardagsfix.vardagsfix.service.BookingService;
@@ -47,9 +48,21 @@ public class BookingController {
         response.setId(booking.getId());
         response.setStartTime(booking.getStartTime());
         response.setEndTime(booking.getEndTime());
-        response.setServiceId(booking.getTaskService().getId());
-        response.setServiceTitle(booking.getTaskService().getTitle());
         response.setStatus(booking.getStatus());
+
+        TaskServiceResponse serviceResponse = new TaskServiceResponse();
+        serviceResponse.setId(booking.getTaskService().getId());
+        serviceResponse.setTitle(booking.getTaskService().getTitle());
+        serviceResponse.setDescription(booking.getTaskService().getDescription());
+        serviceResponse.setPrice(booking.getTaskService().getPrice());
+
+        UserResponse serviceUserResponse = new UserResponse();
+        serviceUserResponse.setId(booking.getTaskService().getUser().getId());
+        serviceUserResponse.setName(booking.getTaskService().getUser().getName());
+        serviceUserResponse.setEmail(booking.getTaskService().getUser().getEmail());
+        serviceResponse.setUser(serviceUserResponse);
+
+        response.setService(serviceResponse);
 
         UserResponse userResponse = new UserResponse();
         userResponse.setId(booking.getUser().getId());

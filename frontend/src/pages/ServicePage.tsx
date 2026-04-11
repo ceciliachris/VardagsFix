@@ -79,6 +79,9 @@ export default function ServicesPage() {
           <button onClick={handleCreateService} style={styles.createButton}>
             Skapa tjänst
           </button>
+          <button onClick={() => navigate("/bookings/my")} style={styles.secondaryButton}>
+            Mina bokningar
+          </button>
           <button
             onClick={() => navigate("/services/my")} style={styles.secondaryButton}>
             Mina tjänster
@@ -144,7 +147,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#ffffff",
     cursor: "pointer",
   },
-   bookingButton: {
+  bookingButton: {
     padding: "10px 16px",
     border: "none",
     borderRadius: "8px",

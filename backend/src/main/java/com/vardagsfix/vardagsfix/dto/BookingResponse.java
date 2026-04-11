@@ -10,8 +10,7 @@ public class BookingResponse {
     private Long id;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Long serviceId;
-    private String serviceTitle;
+    private TaskServiceResponse service;
     private UserResponse user;
     private BookingStatus status;
 }

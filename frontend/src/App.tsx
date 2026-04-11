@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MyServicesPage from "./pages/MyServicesPage";
 import EditServicePage from "./pages/EditServicePage";
 import CreateBookingPage from "./pages/CreateBookingPage";
+import MyBookingsPage from "./pages/MyBookingsPage";
 
 function App() {
   return (
@@ -56,6 +57,15 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateBookingPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/bookings/my"
+          element={
+            <ProtectedRoute>
+              <MyBookingsPage />
             </ProtectedRoute>
           }
         />
