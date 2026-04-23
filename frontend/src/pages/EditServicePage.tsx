@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from
 import { useNavigate, useParams } from "react-router-dom";
 import { getAllServices, updateService } from "../api/serviceApi";
 import { ui } from "../styles/ui";
+import Toast from "../components/Toast";
 
 type AvailableSlot = {
   id?: number;
@@ -74,6 +75,22 @@ function buildDateTime(date: string, time: string) {
   return `${date}T${time}`;
 }
 
+function isPastDateTime(date: string, time: string) {
+  const dateTime = buildDateTime(date, time);
+
+  if (!dateTime) {
+    return false;
+  }
+
+  const parsed = new Date(dateTime);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+
+  return parsed.getTime() <= Date.now();
+}
+
 function generateTimeOptions() {
   const times: string[] = [];
 
@@ -86,6 +103,28 @@ function generateTimeOptions() {
   }
 
   return times;
+}
+
+function hasOverlappingSlots(slots: SlotFormItem[]) {
+  if (slots.length < 2) {
+    return false;
+  }
+
+  const sortedSlots = [...slots].sort(
+    (a, b) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+
+  for (let i = 0; i < sortedSlots.length - 1; i++) {
+    const currentEnd = new Date(sortedSlots[i].endTime).getTime();
+    const nextStart = new Date(sortedSlots[i + 1].startTime).getTime();
+
+    if (currentEnd > nextStart) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export default function EditServicePage() {
@@ -105,9 +144,16 @@ export default function EditServicePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("error");
 
   const timeOptions = useMemo(() => generateTimeOptions(), []);
+  const today = new Date().toISOString().split("T")[0];
+
+  const showError = (message: string) => {
+    setToastType("error");
+    setToastMessage(message);
+  };
 
   useEffect(() => {
     const fetchService = async () => {
@@ -116,7 +162,7 @@ export default function EditServicePage() {
         const service = (services as ServiceItem[]).find((s) => s.id === Number(id));
 
         if (!service) {
-          setError("Tjänsten hittades inte.");
+          showError("Tjänsten hittades inte.");
           return;
         }
 
@@ -152,7 +198,7 @@ export default function EditServicePage() {
           message = err.message;
         }
 
-        setError(message);
+        showError(message);
       } finally {
         setLoading(false);
       }
@@ -162,25 +208,25 @@ export default function EditServicePage() {
   }, [id]);
 
   const handleAddSlot = () => {
-    setError("");
+    setToastMessage("");
 
     if (!slotStartDate) {
-      setError("Startdatum för tillgänglig tid måste fyllas i.");
+      showError("Startdatum för tillgänglig tid måste fyllas i.");
       return;
     }
 
     if (!slotStartTime) {
-      setError("Starttid för tillgänglig tid måste fyllas i.");
+      showError("Starttid för tillgänglig tid måste fyllas i.");
       return;
     }
 
     if (!slotEndDate) {
-      setError("Slutdatum för tillgänglig tid måste fyllas i.");
+      showError("Slutdatum för tillgänglig tid måste fyllas i.");
       return;
     }
 
     if (!slotEndTime) {
-      setError("Sluttid för tillgänglig tid måste fyllas i.");
+      showError("Sluttid för tillgänglig tid måste fyllas i.");
       return;
     }
 
@@ -191,23 +237,35 @@ export default function EditServicePage() {
     const endDate = new Date(endDateTime);
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      setError("Ogiltigt datum eller tid för tillgänglig tid.");
+      showError("Ogiltigt datum eller tid för tillgänglig tid.");
+      return;
+    }
+
+    if (isPastDateTime(slotStartDate, slotStartTime)) {
+      showError("Du kan inte lägga till en tid som redan har passerat.");
       return;
     }
 
     if (endDate <= startDate) {
-      setError("Sluttid för tillgänglig tid måste vara efter starttid.");
+      showError("Sluttid för tillgänglig tid måste vara efter starttid.");
       return;
     }
 
-    setAvailableSlots((prev) => [
-      ...prev,
+    const updatedSlots = [
+      ...availableSlots,
       {
         startTime: startDateTime,
         endTime: endDateTime,
         booked: false,
       },
-    ]);
+    ];
+
+    if (hasOverlappingSlots(updatedSlots)) {
+      showError("Tiderna får inte överlappa varandra.");
+      return;
+    }
+
+    setAvailableSlots(updatedSlots);
 
     setSlotStartDate("");
     setSlotStartTime("");
@@ -219,7 +277,7 @@ export default function EditServicePage() {
     const slot = availableSlots[indexToRemove];
 
     if (slot.booked) {
-      setError("Du kan inte ta bort en tid som redan är bokad.");
+      showError("Du kan inte ta bort en tid som redan är bokad.");
       return;
     }
 
@@ -230,7 +288,7 @@ export default function EditServicePage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
+    setToastMessage("");
 
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
@@ -238,32 +296,32 @@ export default function EditServicePage() {
     const numericPrice = Number(price);
 
     if (!trimmedTitle) {
-      setError("Titel måste fyllas i.");
+      showError("Titel måste fyllas i.");
       return;
     }
 
     if (!trimmedDescription) {
-      setError("Beskrivning måste fyllas i.");
+      showError("Beskrivning måste fyllas i.");
       return;
     }
 
     if (!trimmedLocation) {
-      setError("Plats måste fyllas i.");
+      showError("Plats måste fyllas i.");
       return;
     }
 
     if (Number.isNaN(numericPrice)) {
-      setError("Pris måste vara ett giltigt nummer.");
+      showError("Pris måste vara ett giltigt nummer.");
       return;
     }
 
     if (numericPrice <= 0) {
-      setError("Pris måste vara större än 0.");
+      showError("Pris måste vara större än 0.");
       return;
     }
 
     if (availableSlots.length === 0) {
-      setError("Du måste ha minst en tillgänglig tid.");
+      showError("Du måste ha minst en tillgänglig tid.");
       return;
     }
 
@@ -275,14 +333,19 @@ export default function EditServicePage() {
       const endDate = new Date(slot.endTime);
 
       if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-        setError("En tillgänglig tid har ogiltigt datum eller tid.");
+        showError("En tillgänglig tid har ogiltigt datum eller tid.");
         return;
       }
 
       if (endDate <= startDate) {
-        setError("Alla tillgängliga tider måste ha sluttid efter starttid.");
+        showError("Alla tillgängliga tider måste ha sluttid efter starttid.");
         return;
       }
+    }
+
+    if (hasOverlappingSlots(availableSlots)) {
+      showError("Tiderna får inte överlappa varandra.");
+      return;
     }
 
     setSaving(true);
@@ -305,7 +368,11 @@ export default function EditServicePage() {
         ],
       });
 
-      navigate("/services/my");
+      setToastType("success");
+      setToastMessage("Tjänsten uppdaterades.");
+      setTimeout(() => {
+        navigate("/services/my");
+      }, 700);
     } catch (err: any) {
       console.error(err);
 
@@ -319,7 +386,7 @@ export default function EditServicePage() {
         message = err.message;
       }
 
-      setError(message);
+      showError(message);
     } finally {
       setSaving(false);
     }
@@ -331,6 +398,12 @@ export default function EditServicePage() {
 
   return (
     <div style={ui.formWrapper}>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage("")}
+      />
+
       <div style={styles.heroCard}>
         <div style={styles.heroText}>
           <h1 style={ui.title}>Redigera tjänst</h1>
@@ -418,7 +491,6 @@ export default function EditServicePage() {
                 onChange={(e) => setPrice(e.target.value)}
                 style={ui.input}
                 placeholder="Pris i kronor"
-                min="1"
                 required
               />
             </div>
@@ -459,6 +531,7 @@ export default function EditServicePage() {
                   id="slotStartDate"
                   type="date"
                   value={slotStartDate}
+                  min={today}
                   onChange={(e) => setSlotStartDate(e.target.value)}
                   style={ui.input}
                 />
@@ -491,6 +564,7 @@ export default function EditServicePage() {
                   id="slotEndDate"
                   type="date"
                   value={slotEndDate}
+                  min={today}
                   onChange={(e) => setSlotEndDate(e.target.value)}
                   style={ui.input}
                 />
@@ -584,8 +658,6 @@ export default function EditServicePage() {
             </div>
           )}
         </section>
-
-        {error && <p style={ui.error}>{error}</p>}
 
         <div style={styles.submitRow}>
           <button

@@ -2,6 +2,7 @@ import { useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { createService } from "../api/serviceApi";
 import { ui } from "../styles/ui";
+import Toast from "../components/Toast";
 
 type SlotFormItem = {
   startTime: string;
@@ -30,6 +31,22 @@ function buildDateTime(date: string, time: string) {
   return `${date}T${time}`;
 }
 
+function isPastDateTime(date: string, time: string) {
+  const dateTime = buildDateTime(date, time);
+
+  if (!dateTime) {
+    return false;
+  }
+
+  const parsed = new Date(dateTime);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+
+  return parsed.getTime() <= Date.now();
+}
+
 function generateTimeOptions() {
   const times: string[] = [];
 
@@ -42,6 +59,28 @@ function generateTimeOptions() {
   }
 
   return times;
+}
+
+function hasOverlappingSlots(slots: SlotFormItem[]) {
+  if (slots.length < 2) {
+    return false;
+  }
+
+  const sortedSlots = [...slots].sort(
+    (a, b) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+
+  for (let i = 0; i < sortedSlots.length - 1; i++) {
+    const currentEnd = new Date(sortedSlots[i].endTime).getTime();
+    const nextStart = new Date(sortedSlots[i + 1].startTime).getTime();
+
+    if (currentEnd > nextStart) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export default function CreateServicePage() {
@@ -59,30 +98,37 @@ export default function CreateServicePage() {
   const [availableSlots, setAvailableSlots] = useState<SlotFormItem[]>([]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("error");
 
   const timeOptions = useMemo(() => generateTimeOptions(), []);
+  const today = new Date().toISOString().split("T")[0];
+
+  const showError = (message: string) => {
+    setToastType("error");
+    setToastMessage(message);
+  };
 
   const handleAddSlot = () => {
-    setError("");
+    setToastMessage("");
 
     if (!slotStartDate) {
-      setError("Startdatum för tillgänglig tid måste fyllas i.");
+      showError("Startdatum för tillgänglig tid måste fyllas i.");
       return;
     }
 
     if (!slotStartTime) {
-      setError("Starttid för tillgänglig tid måste fyllas i.");
+      showError("Starttid för tillgänglig tid måste fyllas i.");
       return;
     }
 
     if (!slotEndDate) {
-      setError("Slutdatum för tillgänglig tid måste fyllas i.");
+      showError("Slutdatum för tillgänglig tid måste fyllas i.");
       return;
     }
 
     if (!slotEndTime) {
-      setError("Sluttid för tillgänglig tid måste fyllas i.");
+      showError("Sluttid för tillgänglig tid måste fyllas i.");
       return;
     }
 
@@ -93,22 +139,34 @@ export default function CreateServicePage() {
     const endDate = new Date(endDateTime);
 
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-      setError("Ogiltigt datum eller tid för tillgänglig tid.");
+      showError("Ogiltigt datum eller tid för tillgänglig tid.");
+      return;
+    }
+
+    if (isPastDateTime(slotStartDate, slotStartTime)) {
+      showError("Du kan inte lägga till en tid som redan har passerat.");
       return;
     }
 
     if (endDate <= startDate) {
-      setError("Sluttid för tillgänglig tid måste vara efter starttid.");
+      showError("Sluttid för tillgänglig tid måste vara efter starttid.");
       return;
     }
 
-    setAvailableSlots((prev) => [
-      ...prev,
+    const updatedSlots = [
+      ...availableSlots,
       {
         startTime: startDateTime,
         endTime: endDateTime,
       },
-    ]);
+    ];
+
+    if (hasOverlappingSlots(updatedSlots)) {
+      showError("Tiderna får inte överlappa varandra.");
+      return;
+    }
+
+    setAvailableSlots(updatedSlots);
 
     setSlotStartDate("");
     setSlotStartTime("");
@@ -124,7 +182,7 @@ export default function CreateServicePage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
+    setToastMessage("");
 
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
@@ -132,32 +190,37 @@ export default function CreateServicePage() {
     const numericPrice = Number(price);
 
     if (!trimmedTitle) {
-      setError("Titel måste fyllas i.");
+      showError("Titel måste fyllas i.");
       return;
     }
 
     if (!trimmedDescription) {
-      setError("Beskrivning måste fyllas i.");
+      showError("Beskrivning måste fyllas i.");
       return;
     }
 
     if (!trimmedLocation) {
-      setError("Plats måste fyllas i.");
+      showError("Plats måste fyllas i.");
       return;
     }
 
     if (Number.isNaN(numericPrice)) {
-      setError("Pris måste vara ett giltigt nummer.");
+      showError("Pris måste vara ett giltigt nummer.");
       return;
     }
 
     if (numericPrice <= 0) {
-      setError("Pris måste vara större än 0.");
+      showError("Pris måste vara större än 0.");
       return;
     }
 
     if (availableSlots.length === 0) {
-      setError("Du måste lägga till minst en tillgänglig tid.");
+      showError("Du måste lägga till minst en tillgänglig tid.");
+      return;
+    }
+
+    if (hasOverlappingSlots(availableSlots)) {
+      showError("Tiderna får inte överlappa varandra.");
       return;
     }
 
@@ -172,7 +235,11 @@ export default function CreateServicePage() {
         availableSlots,
       });
 
-      navigate("/services");
+      setToastType("success");
+      setToastMessage("Tjänsten skapades.");
+      setTimeout(() => {
+        navigate("/services");
+      }, 700);
     } catch (err: any) {
       console.error(err);
 
@@ -186,7 +253,7 @@ export default function CreateServicePage() {
         message = err.message;
       }
 
-      setError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -194,6 +261,12 @@ export default function CreateServicePage() {
 
   return (
     <div style={ui.formWrapper}>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage("")}
+      />
+
       <div style={styles.heroCard}>
         <div style={styles.heroText}>
           <h1 style={ui.title}>Skapa tjänst</h1>
@@ -275,7 +348,6 @@ export default function CreateServicePage() {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 style={ui.input}
-                min="1"
                 required
               />
             </div>
@@ -303,7 +375,8 @@ export default function CreateServicePage() {
             <div style={styles.timeBoxHeader}>
               <h3 style={styles.timeBoxTitle}>Ny tillgänglig tid</h3>
               <p style={styles.timeBoxText}>
-                Börja med startdatum och starttid, och välj sedan när tiden ska sluta.
+                Börja med startdatum och starttid, och välj sedan när tiden ska
+                sluta.
               </p>
             </div>
 
@@ -316,6 +389,7 @@ export default function CreateServicePage() {
                   id="slotStartDate"
                   type="date"
                   value={slotStartDate}
+                  min={today}
                   onChange={(e) => setSlotStartDate(e.target.value)}
                   style={ui.input}
                 />
@@ -348,6 +422,7 @@ export default function CreateServicePage() {
                   id="slotEndDate"
                   type="date"
                   value={slotEndDate}
+                  min={today}
                   onChange={(e) => setSlotEndDate(e.target.value)}
                   style={ui.input}
                 />
@@ -431,8 +506,6 @@ export default function CreateServicePage() {
             </div>
           )}
         </section>
-
-        {error && <p style={ui.error}>{error}</p>}
 
         <div style={styles.submitRow}>
           <button

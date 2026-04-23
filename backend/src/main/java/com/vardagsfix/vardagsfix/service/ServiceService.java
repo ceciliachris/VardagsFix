@@ -14,7 +14,9 @@ import com.vardagsfix.vardagsfix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -36,6 +38,8 @@ public class ServiceService {
     public TaskService createForAuthenticatedUser(TaskServiceRequest request, String email) {
         AppUser user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        validateNoOverlappingSlots(request.getAvailableSlots());
 
         TaskService taskService = new TaskService();
         taskService.setTitle(request.getTitle());
@@ -66,6 +70,7 @@ public class ServiceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         validateOwner(service, email);
+        validateNoOverlappingSlots(request.getAvailableSlots());
 
         service.setTitle(request.getTitle());
         service.setDescription(request.getDescription());
@@ -129,6 +134,28 @@ public class ServiceService {
 
         if (!slotRequest.getStartTime().isBefore(slotRequest.getEndTime())) {
             throw new IllegalArgumentException("Slot start time must be before end time");
+        }
+
+        if (!slotRequest.getStartTime().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot create or update a slot in the past");
+        }
+    }
+
+    private void validateNoOverlappingSlots(List<AvailableSlotRequest> slotRequests) {
+        if (slotRequests == null || slotRequests.size() < 2) {
+            return;
+        }
+
+        List<AvailableSlotRequest> sortedSlots = new ArrayList<>(slotRequests);
+        sortedSlots.sort(Comparator.comparing(AvailableSlotRequest::getStartTime));
+
+        for (int i = 0; i < sortedSlots.size() - 1; i++) {
+            AvailableSlotRequest current = sortedSlots.get(i);
+            AvailableSlotRequest next = sortedSlots.get(i + 1);
+
+            if (current.getEndTime().isAfter(next.getStartTime())) {
+                throw new IllegalArgumentException("Available slots must not overlap");
+            }
         }
     }
 }

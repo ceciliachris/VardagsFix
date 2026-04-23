@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { createBooking } from "../api/bookingApi";
 import { getAllServices } from "../api/serviceApi";
 import { ui } from "../styles/ui";
+import Toast from "../components/Toast";
 
 type AvailableSlot = {
   id: number;
@@ -42,6 +43,16 @@ function formatDateTime(dateTime: string) {
   }).format(date);
 }
 
+function isFutureSlot(slot: AvailableSlot) {
+  const start = new Date(slot.startTime);
+
+  if (Number.isNaN(start.getTime())) {
+    return false;
+  }
+
+  return start.getTime() > Date.now();
+}
+
 export default function CreateBookingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,8 +63,13 @@ export default function CreateBookingPage() {
 
   const [pageLoading, setPageLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("error");
+
+  const showError = (message: string) => {
+    setToastType("error");
+    setToastMessage(message);
+  };
 
   useEffect(() => {
     const fetchService = async () => {
@@ -61,7 +77,7 @@ export default function CreateBookingPage() {
         const data = await getAllServices();
 
         if (!Array.isArray(data)) {
-          setError("Ogiltigt svar från servern.");
+          showError("Ogiltigt svar från servern.");
           return;
         }
 
@@ -70,7 +86,7 @@ export default function CreateBookingPage() {
         );
 
         if (!foundService) {
-          setError("Tjänsten hittades inte.");
+          showError("Tjänsten hittades inte.");
           return;
         }
 
@@ -88,7 +104,7 @@ export default function CreateBookingPage() {
           messageText = err.message;
         }
 
-        setError(messageText);
+        showError(messageText);
       } finally {
         setPageLoading(false);
       }
@@ -99,16 +115,15 @@ export default function CreateBookingPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setToastMessage("");
 
     if (!id) {
-      setError("Tjänstens id saknas.");
+      showError("Tjänstens id saknas.");
       return;
     }
 
     if (!selectedSlotId) {
-      setError("Du måste välja en tillgänglig tid.");
+      showError("Du måste välja en tillgänglig tid.");
       return;
     }
 
@@ -121,11 +136,11 @@ export default function CreateBookingPage() {
         message: message.trim(),
       });
 
-      setSuccess("Bokning skapad!");
-
+      setToastType("success");
+      setToastMessage("Bokningen skapades.");
       setTimeout(() => {
         navigate("/services");
-      }, 1000);
+      }, 700);
     } catch (err: any) {
       console.error(err);
 
@@ -139,7 +154,7 @@ export default function CreateBookingPage() {
         messageText = err.message;
       }
 
-      setError(messageText);
+      showError(messageText);
     } finally {
       setBookingLoading(false);
     }
@@ -150,10 +165,18 @@ export default function CreateBookingPage() {
   }
 
   const availableSlots =
-    service?.availableSlots?.filter((slot) => !slot.booked) ?? [];
+    service?.availableSlots?.filter(
+      (slot) => !slot.booked && isFutureSlot(slot)
+    ) ?? [];
 
   return (
     <div style={ui.formWrapper}>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage("")}
+      />
+
       <div style={styles.heroCard}>
         <div style={styles.heroText}>
           <h1 style={ui.title}>Boka tjänst</h1>
@@ -215,7 +238,7 @@ export default function CreateBookingPage() {
           {availableSlots.length === 0 && (
             <div style={styles.emptySectionCard}>
               <p style={styles.emptySectionText}>
-                Det finns inga lediga tider för denna tjänst.
+                Det finns inga framtida lediga tider för denna tjänst.
               </p>
             </div>
           )}
@@ -276,9 +299,6 @@ export default function CreateBookingPage() {
             style={ui.textarea}
           />
         </section>
-
-        {error && <p style={ui.error}>{error}</p>}
-        {success && <p style={ui.success}>{success}</p>}
 
         <div style={styles.actionRow}>
           <button

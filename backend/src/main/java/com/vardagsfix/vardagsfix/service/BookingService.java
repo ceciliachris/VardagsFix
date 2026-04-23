@@ -14,6 +14,7 @@ import com.vardagsfix.vardagsfix.repository.ServiceRepository;
 import com.vardagsfix.vardagsfix.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -58,6 +59,10 @@ public class BookingService {
 
         if (slot.isBooked()) {
             throw new IllegalArgumentException("Selected slot is already booked");
+        }
+
+        if (!slot.getStartTime().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("You cannot book a time that has already started or passed");
         }
 
         boolean hasConflict =

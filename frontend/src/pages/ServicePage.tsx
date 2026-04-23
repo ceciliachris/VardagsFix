@@ -45,6 +45,16 @@ function getCurrentUserEmail(): string | null {
   }
 }
 
+function isFutureSlot(slot: AvailableSlot) {
+  const start = new Date(slot.startTime);
+
+  if (Number.isNaN(start.getTime())) {
+    return false;
+  }
+
+  return start.getTime() > Date.now();
+}
+
 export default function ServicesPage() {
   const navigate = useNavigate();
   const currentUserEmail = getCurrentUserEmail();
@@ -221,7 +231,9 @@ export default function ServicesPage() {
                 !!currentUserEmail && serviceOwnerEmail === currentUserEmail;
 
               const availableSlots =
-                service.availableSlots?.filter((slot) => !slot.booked) ?? [];
+                service.availableSlots?.filter(
+                  (slot) => !slot.booked && isFutureSlot(slot)
+                ) ?? [];
 
               const totalSlots = service.availableSlots?.length ?? 0;
 

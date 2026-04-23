@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getMyServices, deleteService } from "../api/serviceApi";
 import { ui } from "../styles/ui";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Toast from "../components/Toast";
 
 type AvailableSlot = {
   id: number;
@@ -20,6 +21,16 @@ type ServiceItem = {
   availableSlots?: AvailableSlot[];
 };
 
+function isFutureSlot(slot: AvailableSlot) {
+  const start = new Date(slot.startTime);
+
+  if (Number.isNaN(start.getTime())) {
+    return false;
+  }
+
+  return start.getTime() > Date.now();
+}
+
 export default function MyServicesPage() {
   const navigate = useNavigate();
 
@@ -27,11 +38,17 @@ export default function MyServicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState("");
-  const [feedbackType, setFeedbackType] = useState<"success" | "error" | "">("");
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
+
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("error");
+
+  const showError = (message: string) => {
+    setToastType("error");
+    setToastMessage(message);
+  };
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -68,8 +85,7 @@ export default function MyServicesPage() {
   const openDeleteDialog = (id: number) => {
     setSelectedServiceId(id);
     setConfirmDeleteOpen(true);
-    setFeedback("");
-    setFeedbackType("");
+    setToastMessage("");
   };
 
   const handleDeleteConfirmed = async () => {
@@ -84,8 +100,8 @@ export default function MyServicesPage() {
       setServices((prev) =>
         prev.filter((service) => service.id !== selectedServiceId)
       );
-      setFeedback("Tjänsten togs bort.");
-      setFeedbackType("success");
+      setToastType("success");
+      setToastMessage("Tjänsten togs bort.");
       setConfirmDeleteOpen(false);
       setSelectedServiceId(null);
     } catch (err: any) {
@@ -101,8 +117,7 @@ export default function MyServicesPage() {
         message = err.message;
       }
 
-      setFeedback(message);
-      setFeedbackType("error");
+      showError(message);
     } finally {
       setDeletingId(null);
     }
@@ -122,10 +137,23 @@ export default function MyServicesPage() {
       sum + (service.availableSlots?.filter((slot) => slot.booked).length ?? 0),
     0
   );
-  const totalAvailableSlots = totalSlots - totalBookedSlots;
+  const totalAvailableSlots = services.reduce(
+    (sum, service) =>
+      sum +
+      (service.availableSlots?.filter(
+        (slot) => !slot.booked && isFutureSlot(slot)
+      ).length ?? 0),
+    0
+  );
 
   return (
     <div style={ui.pageWrapper}>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage("")}
+      />
+
       <ConfirmDialog
         open={confirmDeleteOpen}
         title="Ta bort tjänst"
@@ -170,9 +198,6 @@ export default function MyServicesPage() {
       </div>
 
       {error && <p style={ui.error}>{error}</p>}
-      {feedback && (
-        <p style={feedbackType === "success" ? ui.success : ui.error}>{feedback}</p>
-      )}
 
       {!error && services.length === 0 && (
         <div style={styles.emptyState}>
@@ -201,7 +226,10 @@ export default function MyServicesPage() {
               const totalSlots = service.availableSlots?.length ?? 0;
               const bookedSlots =
                 service.availableSlots?.filter((slot) => slot.booked).length ?? 0;
-              const availableSlots = totalSlots - bookedSlots;
+              const availableSlots =
+                service.availableSlots?.filter(
+                  (slot) => !slot.booked && isFutureSlot(slot)
+                ).length ?? 0;
 
               return (
                 <div key={service.id} style={styles.serviceCard}>
