@@ -1,8 +1,9 @@
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useState } from "react";
+import type { FormEvent, CSSProperties } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import { saveToken } from "../utils/storage";
-import { ui } from "../styles/ui";
+import Toast from "../components/Toast";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -11,20 +12,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("error");
+
+  const showError = (message: string) => {
+    setToastType("error");
+    setToastMessage(message);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setToastMessage("");
     setLoading(true);
 
     try {
       const token = await login({ email, password });
       saveToken(token);
-      setSuccess("Inloggning lyckades.");
-      navigate("/services");
+      setToastType("success");
+      setToastMessage("Inloggning lyckades.");
+      setTimeout(() => {
+        navigate("/services");
+      }, 700);
     } catch (err: any) {
       console.error(err);
 
@@ -40,7 +48,7 @@ export default function LoginPage() {
         message = `Fel från servern (${err.response.status}).`;
       }
 
-      setError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -48,24 +56,47 @@ export default function LoginPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.authCard}>
-        <div style={styles.heroSection}>
-          <div style={styles.logoBadge}>VF</div>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage("")}
+      />
 
-          <div style={styles.heroText}>
-            <h1 style={styles.title}>Välkommen tillbaka</h1>
-            <p style={styles.subtitle}>
-              Logga in för att hitta tjänster, boka tider och hantera dina egna
-              bokningar på ett och samma ställe.
-            </p>
+      <div style={styles.backgroundGlowLeft} />
+      <div style={styles.backgroundGlowRight} />
+
+      <div style={styles.wrapper}>
+        <div style={styles.brandPanel}>
+          <span style={styles.brandBadge}>VardagsFix</span>
+          <h1 style={styles.brandTitle}>Välkommen tillbaka</h1>
+          <p style={styles.brandText}>
+            Logga in för att hitta tjänster, boka tider och hantera dina egna
+            uppdrag på ett smidigt sätt.
+          </p>
+
+          <div style={styles.infoGrid}>
+            <div style={styles.infoCard}>
+              <span style={styles.infoValue}>Boka</span>
+              <span style={styles.infoLabel}>Vardagstjänster enkelt</span>
+            </div>
+
+            <div style={styles.infoCard}>
+              <span style={styles.infoValue}>Hantera</span>
+              <span style={styles.infoLabel}>Tider och bokningar tydligt</span>
+            </div>
           </div>
         </div>
 
-        <div style={styles.divider} />
+        <form onSubmit={handleSubmit} style={styles.formCard}>
+          <div style={styles.formHeader}>
+            <h2 style={styles.heading}>Logga in</h2>
+            <p style={styles.subText}>
+              Ange dina uppgifter för att fortsätta.
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div>
-            <label htmlFor="email" style={ui.label}>
+          <div style={styles.fieldGroup}>
+            <label style={styles.label} htmlFor="email">
               E-post
             </label>
             <input
@@ -79,8 +110,8 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" style={ui.label}>
+          <div style={styles.fieldGroup}>
+            <label style={styles.label} htmlFor="password">
               Lösenord
             </label>
             <input
@@ -94,32 +125,21 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <p style={ui.error}>{error}</p>}
-          {success && <p style={ui.success}>{success}</p>}
+          <button
+            type="submit"
+            style={{
+              ...styles.button,
+              ...(loading ? styles.buttonDisabled : {}),
+            }}
+            disabled={loading}
+          >
+            {loading ? "Loggar in..." : "Logga in"}
+          </button>
 
-          <div style={styles.actionRow}>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                ...styles.primaryActionButton,
-                ...(loading ? ui.disabledButton : {}),
-              }}
-            >
-              {loading ? "Loggar in..." : "Logga in"}
-            </button>
-          </div>
-        </form>
-
-        <div style={styles.footerBlock}>
-          <p style={styles.footerText}>
-            Har du inget konto ännu?
+          <p style={styles.text}>
+            Har du inget konto? <Link to="/register">Registrera dig här</Link>
           </p>
-
-          <Link to="/register" style={styles.secondaryLink}>
-            Registrera dig här
-          </Link>
-        </div>
+        </form>
       </div>
     </div>
   );
@@ -128,109 +148,165 @@ export default function LoginPage() {
 const styles: Record<string, CSSProperties> = {
   page: {
     minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background:
-      "radial-gradient(circle at top, #dbeafe 0%, #eff6ff 25%, #f8fafc 60%)",
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%)",
     padding: "24px",
   },
-  authCard: {
-    width: "100%",
-    maxWidth: "520px",
-    background: "rgba(255, 255, 255, 0.94)",
-    backdropFilter: "blur(10px)",
-    padding: "32px",
-    borderRadius: "28px",
-    border: "1px solid #e5e7eb",
-    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.10)",
+  backgroundGlowLeft: {
+    position: "absolute",
+    width: "320px",
+    height: "320px",
+    borderRadius: "50%",
+    background: "rgba(37, 99, 235, 0.10)",
+    top: "-60px",
+    left: "-80px",
+    filter: "blur(10px)",
+  },
+  backgroundGlowRight: {
+    position: "absolute",
+    width: "280px",
+    height: "280px",
+    borderRadius: "50%",
+    background: "rgba(59, 130, 246, 0.10)",
+    bottom: "-40px",
+    right: "-60px",
+    filter: "blur(10px)",
+  },
+  wrapper: {
+    position: "relative",
+    zIndex: 1,
+    minHeight: "calc(100vh - 48px)",
+    maxWidth: "560px",
+    margin: "0 auto",
     display: "grid",
     gap: "24px",
+    alignContent: "center",
   },
-  heroSection: {
-    display: "grid",
-    gap: "16px",
-    justifyItems: "start",
-  },
-  logoBadge: {
-    width: "52px",
-    height: "52px",
-    borderRadius: "16px",
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    color: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 800,
-    fontSize: "18px",
-    boxShadow: "0 12px 24px rgba(37, 99, 235, 0.20)",
-  },
-  heroText: {
-    display: "grid",
-    gap: "10px",
-  },
-  title: {
-    margin: 0,
-    fontSize: "34px",
-    lineHeight: 1.1,
-    fontWeight: 800,
-    color: "#0f172a",
-  },
-  subtitle: {
-    margin: 0,
-    color: "#475569",
-    lineHeight: 1.6,
-    fontSize: "15px",
-  },
-  divider: {
-    height: "1px",
-    background: "#e5e7eb",
-  },
-  form: {
+  brandPanel: {
+    width: "100%",
+    boxSizing: "border-box",
+    background: "linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)",
+    border: "1px solid #bfdbfe",
+    borderRadius: "28px",
+    padding: "40px",
+    boxShadow: "0 20px 50px rgba(37, 99, 235, 0.10)",
     display: "grid",
     gap: "18px",
   },
-  input: {
-    width: "100%",
-    padding: "13px 14px",
-    borderRadius: "12px",
-    border: "1px solid #d1d5db",
-    fontSize: "16px",
-    color: "#111827",
+  brandBadge: {
+    display: "inline-flex",
+    width: "fit-content",
+    padding: "7px 12px",
+    borderRadius: "999px",
     background: "#ffffff",
-    boxSizing: "border-box",
-  },
-  actionRow: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  primaryActionButton: {
-    padding: "13px 18px",
-    border: "none",
-    borderRadius: "14px",
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    color: "#ffffff",
-    cursor: "pointer",
+    color: "#1d4ed8",
     fontWeight: 700,
-    fontSize: "15px",
-    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.18)",
-    flex: 1,
+    fontSize: "13px",
+    border: "1px solid #dbeafe",
   },
-  footerBlock: {
-    display: "grid",
-    gap: "8px",
-    justifyItems: "start",
+  brandTitle: {
+    margin: 0,
+    fontSize: "40px",
+    lineHeight: 1.1,
+    color: "#0f172a",
   },
-  footerText: {
+  brandText: {
     margin: 0,
     color: "#475569",
+    fontSize: "17px",
+    lineHeight: 1.7,
+    maxWidth: "560px",
+  },
+  infoGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "14px",
+    marginTop: "8px",
+  },
+  infoCard: {
+    background: "#ffffff",
+    borderRadius: "20px",
+    padding: "18px",
+    border: "1px solid #dbeafe",
+    display: "grid",
+    gap: "6px",
+  },
+  infoValue: {
+    fontSize: "20px",
+    fontWeight: 800,
+    color: "#111827",
+  },
+  infoLabel: {
+    fontSize: "14px",
+    color: "#64748b",
+    lineHeight: 1.5,
+  },
+  formCard: {
+    width: "100%",
+    maxWidth: "560px",
+    boxSizing: "border-box",
+    background: "#ffffff",
+    padding: "32px",
+    borderRadius: "24px",
+    boxShadow: "0 18px 40px rgba(15, 23, 42, 0.10)",
+    display: "grid",
+    gap: "18px",
+    border: "1px solid #e5e7eb",
+  },
+  formHeader: {
+    display: "grid",
+    gap: "8px",
+  },
+  heading: {
+    margin: 0,
+    fontSize: "32px",
+    color: "#0f172a",
+  },
+  subText: {
+    margin: 0,
+    color: "#64748b",
+    lineHeight: 1.6,
+  },
+  fieldGroup: {
+    display: "grid",
+    gap: "8px",
+  },
+  label: {
+    fontWeight: 700,
+    color: "#0f172a",
     fontSize: "14px",
   },
-  secondaryLink: {
-    color: "#2563eb",
+  input: {
+    padding: "13px 14px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    fontSize: "16px",
+    outline: "none",
+    background: "#ffffff",
+    color: "#111827",
+  },
+  button: {
+    marginTop: "4px",
+    padding: "13px 18px",
+    border: "none",
+    borderRadius: "12px",
+    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    color: "#ffffff",
+    fontSize: "16px",
     fontWeight: 700,
-    textDecoration: "none",
+    cursor: "pointer",
+    boxShadow: "0 12px 24px rgba(37, 99, 235, 0.20)",
+  },
+  buttonDisabled: {
+    cursor: "not-allowed",
+    opacity: 0.7,
+    boxShadow: "none",
+  },
+  text: {
+    margin: 0,
     fontSize: "14px",
+    color: "#475569",
+    lineHeight: 1.6,
   },
 };
