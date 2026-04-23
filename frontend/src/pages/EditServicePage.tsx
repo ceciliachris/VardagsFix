@@ -412,7 +412,8 @@ export default function EditServicePage() {
               </label>
               <input
                 id="price"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 style={ui.input}

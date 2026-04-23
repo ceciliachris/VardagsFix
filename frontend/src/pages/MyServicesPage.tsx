@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyServices, deleteService } from "../api/serviceApi";
 import { ui } from "../styles/ui";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type AvailableSlot = {
   id: number;
@@ -26,6 +27,11 @@ export default function MyServicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"success" | "error" | "">("");
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -59,19 +65,29 @@ export default function MyServicesPage() {
     fetchServices();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    const confirmed = window.confirm(
-      "Är du säker på att du vill ta bort tjänsten?"
-    );
-    if (!confirmed) {
+  const openDeleteDialog = (id: number) => {
+    setSelectedServiceId(id);
+    setConfirmDeleteOpen(true);
+    setFeedback("");
+    setFeedbackType("");
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (selectedServiceId === null) {
       return;
     }
 
-    setDeletingId(id);
+    setDeletingId(selectedServiceId);
 
     try {
-      await deleteService(id);
-      setServices((prev) => prev.filter((service) => service.id !== id));
+      await deleteService(selectedServiceId);
+      setServices((prev) =>
+        prev.filter((service) => service.id !== selectedServiceId)
+      );
+      setFeedback("Tjänsten togs bort.");
+      setFeedbackType("success");
+      setConfirmDeleteOpen(false);
+      setSelectedServiceId(null);
     } catch (err: any) {
       console.error(err);
 
@@ -85,7 +101,8 @@ export default function MyServicesPage() {
         message = err.message;
       }
 
-      alert(message);
+      setFeedback(message);
+      setFeedbackType("error");
     } finally {
       setDeletingId(null);
     }
@@ -109,6 +126,22 @@ export default function MyServicesPage() {
 
   return (
     <div style={ui.pageWrapper}>
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Ta bort tjänst"
+        message="Är du säker på att du vill ta bort tjänsten? Det går inte att ångra."
+        confirmText="Ta bort"
+        cancelText="Avbryt"
+        danger
+        loading={deletingId !== null}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => {
+          if (deletingId !== null) return;
+          setConfirmDeleteOpen(false);
+          setSelectedServiceId(null);
+        }}
+      />
+
       <div style={styles.heroCard}>
         <div style={styles.heroText}>
           <h1 style={ui.title}>Mina tjänster</h1>
@@ -137,6 +170,9 @@ export default function MyServicesPage() {
       </div>
 
       {error && <p style={ui.error}>{error}</p>}
+      {feedback && (
+        <p style={feedbackType === "success" ? ui.success : ui.error}>{feedback}</p>
+      )}
 
       {!error && services.length === 0 && (
         <div style={styles.emptyState}>
@@ -226,7 +262,7 @@ export default function MyServicesPage() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(service.id)}
+                        onClick={() => openDeleteDialog(service.id)}
                         style={{
                           ...styles.dangerActionButton,
                           ...(isDeleting ? ui.disabledButton : {}),

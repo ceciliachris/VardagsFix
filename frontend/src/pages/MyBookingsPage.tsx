@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { cancelBooking, getMyBookings } from "../api/bookingApi";
 import { ui } from "../styles/ui";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type BookingServiceUser = {
   id: number;
@@ -83,6 +84,11 @@ export default function MyBookingsPage() {
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"success" | "error" | "">("");
+
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -116,25 +122,39 @@ export default function MyBookingsPage() {
     fetchBookings();
   }, []);
 
-  const handleCancel = async (id: number) => {
-    const confirmed = window.confirm("Är du säker på att du vill avboka?");
-    if (!confirmed) {
+  const openCancelDialog = (id: number) => {
+    setSelectedBookingId(id);
+    setConfirmCancelOpen(true);
+    setFeedback("");
+    setFeedbackType("");
+  };
+
+  const handleCancelConfirmed = async () => {
+    if (selectedBookingId === null) {
       return;
     }
 
-    setCancellingId(id);
+    setCancellingId(selectedBookingId);
 
     try {
-      await cancelBooking(id);
+      await cancelBooking(selectedBookingId);
 
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === id ? { ...booking, status: "CANCELLED" } : booking
+          booking.id === selectedBookingId
+            ? { ...booking, status: "CANCELLED" }
+            : booking
         )
       );
+
+      setFeedback("Bokningen avbokades.");
+      setFeedbackType("success");
+      setConfirmCancelOpen(false);
+      setSelectedBookingId(null);
     } catch (err: any) {
       console.error(err);
-      alert("Kunde inte avboka bokningen.");
+      setFeedback("Kunde inte avboka bokningen.");
+      setFeedbackType("error");
     } finally {
       setCancellingId(null);
     }
@@ -154,6 +174,22 @@ export default function MyBookingsPage() {
 
   return (
     <div style={ui.pageWrapper}>
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        title="Avboka bokning"
+        message="Är du säker på att du vill avboka bokningen?"
+        confirmText="Avboka"
+        cancelText="Behåll bokning"
+        danger
+        loading={cancellingId !== null}
+        onConfirm={handleCancelConfirmed}
+        onCancel={() => {
+          if (cancellingId !== null) return;
+          setConfirmCancelOpen(false);
+          setSelectedBookingId(null);
+        }}
+      />
+
       <div style={styles.heroCard}>
         <div style={styles.heroText}>
           <h1 style={ui.title}>Mina bokningar</h1>
@@ -177,6 +213,9 @@ export default function MyBookingsPage() {
       </div>
 
       {error && <p style={ui.error}>{error}</p>}
+      {feedback && (
+        <p style={feedbackType === "success" ? ui.success : ui.error}>{feedback}</p>
+      )}
 
       {!error && bookings.length === 0 && (
         <div style={styles.emptyState}>
@@ -275,7 +314,7 @@ export default function MyBookingsPage() {
 
                         <div style={styles.actionRow}>
                           <button
-                            onClick={() => handleCancel(booking.id)}
+                            onClick={() => openCancelDialog(booking.id)}
                             style={{
                               ...styles.dangerActionButton,
                               ...(isCancelling ? ui.disabledButton : {}),

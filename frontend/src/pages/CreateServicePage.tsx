@@ -269,7 +269,8 @@ export default function CreateServicePage() {
               </label>
               <input
                 id="price"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 placeholder="Pris i kronor"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
