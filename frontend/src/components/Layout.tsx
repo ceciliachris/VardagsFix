@@ -9,7 +9,9 @@ export default function Layout({ children }: Props) {
   return (
     <div style={styles.page}>
       <Navbar />
-      <main style={styles.content}>{children}</main>
+      <main style={styles.content}>
+        <div style={styles.inner}>{children}</div>
+      </main>
     </div>
   );
 }
@@ -17,10 +19,19 @@ export default function Layout({ children }: Props) {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#f9fafb",
+    background: "#f8fafc",
+    display: "flex",
+    flexDirection: "column",
   },
   content: {
-    paddingTop: "8px",
-    paddingBottom: "32px",
+    flex: 1,
+    paddingTop: "24px",
+    paddingBottom: "40px",
+  },
+  inner: {
+    maxWidth: "1100px",
+    margin: "0 auto",
+    padding: "0 20px",
+    width: "100%",
   },
 };

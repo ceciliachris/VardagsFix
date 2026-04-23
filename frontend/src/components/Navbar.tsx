@@ -13,7 +13,12 @@ export default function Navbar() {
     <nav style={styles.navbar}>
       <div style={styles.inner}>
         <div style={styles.brandSection}>
-          <span style={styles.brand}>VardagsFix</span>
+          <div style={styles.logoBadge}>VF</div>
+
+          <div style={styles.brandTextBlock}>
+            <span style={styles.brand}>VardagsFix</span>
+            <span style={styles.brandTag}>Bokning av vardagstjänster</span>
+          </div>
         </div>
 
         <div style={styles.links}>
@@ -88,59 +93,92 @@ const styles: Record<string, React.CSSProperties> = {
     position: "sticky",
     top: 0,
     zIndex: 100,
-    background: "#ffffff",
+    background: "rgba(255, 255, 255, 0.92)",
+    backdropFilter: "blur(10px)",
     borderBottom: "1px solid #e5e7eb",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
   },
   inner: {
     maxWidth: "1100px",
     margin: "0 auto",
-    padding: "16px 24px",
+    padding: "16px 20px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "16px",
+    gap: "18px",
     flexWrap: "wrap",
   },
   brandSection: {
     display: "flex",
     alignItems: "center",
+    gap: "12px",
+    minWidth: "fit-content",
+  },
+  logoBadge: {
+    width: "42px",
+    height: "42px",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    color: "#ffffff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 800,
+    fontSize: "15px",
+    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.18)",
+  },
+  brandTextBlock: {
+    display: "grid",
+    gap: "2px",
   },
   brand: {
     fontSize: "20px",
-    fontWeight: 700,
-    color: "#111827",
-    letterSpacing: "0.3px",
+    fontWeight: 800,
+    color: "#0f172a",
+    letterSpacing: "0.2px",
+    lineHeight: 1.2,
+  },
+  brandTag: {
+    fontSize: "12px",
+    color: "#6b7280",
+    lineHeight: 1.3,
   },
   links: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
     flexWrap: "wrap",
+    flex: 1,
   },
   link: {
     textDecoration: "none",
-    color: "#374151",
-    padding: "8px 12px",
-    borderRadius: "8px",
-    fontWeight: 500,
-    transition: "background 0.2s ease, color 0.2s ease",
+    color: "#334155",
+    padding: "10px 14px",
+    borderRadius: "12px",
+    fontWeight: 600,
+    fontSize: "14px",
+    whiteSpace: "nowrap",
+    transition: "all 0.2s ease",
   },
   activeLink: {
     background: "#eff6ff",
     color: "#2563eb",
+    boxShadow: "inset 0 0 0 1px #dbeafe",
   },
   actions: {
     display: "flex",
     alignItems: "center",
   },
   logoutButton: {
-    padding: "10px 14px",
+    padding: "10px 16px",
     border: "none",
-    borderRadius: "8px",
-    background: "#ef4444",
+    borderRadius: "12px",
+    background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
     color: "#ffffff",
     cursor: "pointer",
-    fontWeight: 600,
+    fontWeight: 700,
+    fontSize: "14px",
+    minHeight: "42px",
+    boxShadow: "0 10px 20px rgba(220, 38, 38, 0.18)",
   },
 };

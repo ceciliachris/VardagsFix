@@ -1,8 +1,8 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../api/authApi";
 import { saveToken } from "../utils/storage";
+import { ui } from "../styles/ui";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -47,100 +47,190 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={styles.wrapper}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h1 style={styles.heading}>Logga in</h1>
+    <div style={styles.page}>
+      <div style={styles.authCard}>
+        <div style={styles.heroSection}>
+          <div style={styles.logoBadge}>VF</div>
 
-        <label style={styles.label}>E-post</label>
-        <input
-          type="email"
-          placeholder="namn@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-          required
-        />
+          <div style={styles.heroText}>
+            <h1 style={styles.title}>Välkommen tillbaka</h1>
+            <p style={styles.subtitle}>
+              Logga in för att hitta tjänster, boka tider och hantera dina egna
+              bokningar på ett och samma ställe.
+            </p>
+          </div>
+        </div>
 
-        <label style={styles.label}>Lösenord</label>
-        <input
-          type="password"
-          placeholder="Lösenord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-          required
-        />
+        <div style={styles.divider} />
 
-        <button type="submit" style={styles.button} disabled={loading}>
-          {loading ? "Loggar in..." : "Logga in"}
-        </button>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div>
+            <label htmlFor="email" style={ui.label}>
+              E-post
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="namn@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={styles.input}
+              required
+            />
+          </div>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.success}>{success}</p>}
-        <p style={styles.text}>
-  Har du inget konto? <Link to="/register">Registrera dig här</Link>
-</p>
-      </form>
+          <div>
+            <label htmlFor="password" style={ui.label}>
+              Lösenord
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Lösenord"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
+              required
+            />
+          </div>
+
+          {error && <p style={ui.error}>{error}</p>}
+          {success && <p style={ui.success}>{success}</p>}
+
+          <div style={styles.actionRow}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                ...styles.primaryActionButton,
+                ...(loading ? ui.disabledButton : {}),
+              }}
+            >
+              {loading ? "Loggar in..." : "Logga in"}
+            </button>
+          </div>
+        </form>
+
+        <div style={styles.footerBlock}>
+          <p style={styles.footerText}>
+            Har du inget konto ännu?
+          </p>
+
+          <Link to="/register" style={styles.secondaryLink}>
+            Registrera dig här
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  wrapper: {
+const styles: Record<string, CSSProperties> = {
+  page: {
     minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    background: "#f5f7fb",
+    background:
+      "radial-gradient(circle at top, #dbeafe 0%, #eff6ff 25%, #f8fafc 60%)",
     padding: "24px",
   },
-  form: {
+  authCard: {
     width: "100%",
-    maxWidth: "400px",
-    background: "#ffffff",
+    maxWidth: "520px",
+    background: "rgba(255, 255, 255, 0.94)",
+    backdropFilter: "blur(10px)",
     padding: "32px",
-    borderRadius: "12px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+    borderRadius: "28px",
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 20px 50px rgba(15, 23, 42, 0.10)",
+    display: "grid",
+    gap: "24px",
+  },
+  heroSection: {
+    display: "grid",
+    gap: "16px",
+    justifyItems: "start",
+  },
+  logoBadge: {
+    width: "52px",
+    height: "52px",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+    color: "#ffffff",
     display: "flex",
-    flexDirection: "column",
-    gap: "12px",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 800,
+    fontSize: "18px",
+    boxShadow: "0 12px 24px rgba(37, 99, 235, 0.20)",
   },
-  heading: {
-    margin: "0 0 16px 0",
-    fontSize: "2rem",
+  heroText: {
+    display: "grid",
+    gap: "10px",
+  },
+  title: {
+    margin: 0,
+    fontSize: "34px",
+    lineHeight: 1.1,
+    fontWeight: 800,
     color: "#0f172a",
   },
-  label: {
-    fontWeight: 600,
-    color: "#0f172a",
+  subtitle: {
+    margin: 0,
+    color: "#475569",
+    lineHeight: 1.6,
+    fontSize: "15px",
+  },
+  divider: {
+    height: "1px",
+    background: "#e5e7eb",
+  },
+  form: {
+    display: "grid",
+    gap: "18px",
   },
   input: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #cbd5e1",
+    width: "100%",
+    padding: "13px 14px",
+    borderRadius: "12px",
+    border: "1px solid #d1d5db",
     fontSize: "16px",
-    outline: "none",
+    color: "#111827",
+    background: "#ffffff",
+    boxSizing: "border-box",
   },
-  button: {
-    marginTop: "8px",
-    padding: "12px",
+  actionRow: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+  primaryActionButton: {
+    padding: "13px 18px",
     border: "none",
-    borderRadius: "8px",
-    background: "#2563eb",
+    borderRadius: "14px",
+    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
     color: "#ffffff",
-    fontSize: "16px",
     cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "15px",
+    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.18)",
+    flex: 1,
   },
-  error: {
-    color: "#c62828",
+  footerBlock: {
+    display: "grid",
+    gap: "8px",
+    justifyItems: "start",
+  },
+  footerText: {
     margin: 0,
+    color: "#475569",
+    fontSize: "14px",
   },
-  success: {
-    color: "#2e7d32",
-    margin: 0,
+  secondaryLink: {
+    color: "#2563eb",
+    fontWeight: 700,
+    textDecoration: "none",
+    fontSize: "14px",
   },
-  text: {
-  marginTop: "8px",
-  fontSize: "14px",
-},
 };

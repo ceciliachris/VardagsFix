@@ -94,11 +94,9 @@ public class ServiceService {
             }
         }
 
-        List<AvailableSlot> finalSlots = new ArrayList<>();
-        finalSlots.addAll(bookedSlots);
-        finalSlots.addAll(newSlots);
-
-        service.setAvailableSlots(finalSlots);
+        existingSlots.clear();
+        existingSlots.addAll(bookedSlots);
+        existingSlots.addAll(newSlots);
 
         return serviceRepository.save(service);
     }
