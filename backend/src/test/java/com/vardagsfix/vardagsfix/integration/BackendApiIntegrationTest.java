@@ -16,8 +16,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -52,9 +54,9 @@ class BackendApiIntegrationTest {
     private UserRepository userRepository;
 
     @Test
-    void protectedEndpoint_shouldReturnClientError_whenTokenIsMissing() throws Exception {
+    void protectedEndpoint_shouldReturnForbidden_whenTokenIsMissing() throws Exception {
         mockMvc.perform(get("/services"))
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -118,6 +120,50 @@ class BackendApiIntegrationTest {
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void updateService_shouldReturnForbidden_whenUserIsNotOwner() throws Exception {
+        clearDatabase();
+
+        String ownerToken = registerAndLogin("Owner", uniqueEmail("owner"));
+        String otherUserToken = registerAndLogin("Other", uniqueEmail("other"));
+
+        JsonNode serviceJson = createService(ownerToken);
+        long serviceId = serviceJson.get("id").asLong();
+
+        String updateRequest = """
+                {
+                  "title": "Hacked",
+                  "description": "Hacked",
+                  "price": 999,
+                  "location": "Stockholm",
+                  "availableSlots": []
+                }
+                """;
+
+        mockMvc.perform(put("/services/" + serviceId)
+                        .header("Authorization", bearer(otherUserToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateRequest))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
+    void deleteService_shouldReturnForbidden_whenUserIsNotOwner() throws Exception {
+        clearDatabase();
+
+        String ownerToken = registerAndLogin("Owner", uniqueEmail("owner"));
+        String otherUserToken = registerAndLogin("Other", uniqueEmail("other"));
+
+        JsonNode serviceJson = createService(ownerToken);
+        long serviceId = serviceJson.get("id").asLong();
+
+        mockMvc.perform(delete("/services/" + serviceId)
+                        .header("Authorization", bearer(otherUserToken)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
     }
 
     @Test
