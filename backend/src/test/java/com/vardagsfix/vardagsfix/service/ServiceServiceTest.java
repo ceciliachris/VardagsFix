@@ -57,6 +57,7 @@ class ServiceServiceTest {
         taskService.setTitle("Gräsklippning");
         taskService.setDescription("Original beskrivning");
         taskService.setPrice(300.0);
+        taskService.setLocation("Malmö");
         taskService.setUser(owner);
         taskService.setAvailableSlots(new ArrayList<>());
 
@@ -64,6 +65,7 @@ class ServiceServiceTest {
         request.setTitle("Ny titel");
         request.setDescription("Ny beskrivning");
         request.setPrice(500.0);
+        request.setLocation("Lund");
         request.setAvailableSlots(List.of(
                 createSlotRequest(
                         LocalDateTime.of(2026, 5, 1, 10, 0),
@@ -78,6 +80,7 @@ class ServiceServiceTest {
         createRequest.setTitle("Hundpromenad");
         createRequest.setDescription("Promenerar hund");
         createRequest.setPrice(200.0);
+        createRequest.setLocation("Malmö");
         createRequest.setAvailableSlots(List.of(
                 createSlotRequest(
                         LocalDateTime.of(2026, 5, 2, 9, 0),
@@ -98,6 +101,7 @@ class ServiceServiceTest {
         assertEquals("Hundpromenad", saved.getTitle());
         assertEquals("Promenerar hund", saved.getDescription());
         assertEquals(200.0, saved.getPrice());
+        assertEquals("Malmö", saved.getLocation());
         assertEquals(2, saved.getAvailableSlots().size());
         assertFalse(saved.getAvailableSlots().get(0).isBooked());
         assertEquals(saved, saved.getAvailableSlots().get(0).getTaskService());
@@ -119,11 +123,7 @@ class ServiceServiceTest {
 
     @Test
     void createForAuthenticatedUser_shouldThrowIllegalArgumentException_whenSlotHasInvalidTimeRange() {
-        TaskServiceRequest createRequest = new TaskServiceRequest();
-        createRequest.setTitle("Hundpromenad");
-        createRequest.setDescription("Promenerar hund");
-        createRequest.setPrice(200.0);
-        createRequest.setAvailableSlots(List.of(
+        TaskServiceRequest createRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
                         LocalDateTime.of(2026, 5, 2, 10, 0),
                         LocalDateTime.of(2026, 5, 2, 9, 0)
@@ -138,6 +138,71 @@ class ServiceServiceTest {
         );
 
         verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void createForAuthenticatedUser_shouldThrowIllegalArgumentException_whenSlotIsInPast() {
+        TaskServiceRequest createRequest = createRequestWithSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.now().minusDays(1),
+                        LocalDateTime.now().minusDays(1).plusHours(1)
+                )
+        ));
+
+        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(owner));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.createForAuthenticatedUser(createRequest, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void createForAuthenticatedUser_shouldThrowIllegalArgumentException_whenSlotsOverlap() {
+        TaskServiceRequest createRequest = createRequestWithSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 2, 10, 0),
+                        LocalDateTime.of(2026, 5, 2, 11, 0)
+                ),
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 2, 10, 30),
+                        LocalDateTime.of(2026, 5, 2, 11, 30)
+                )
+        ));
+
+        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(owner));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.createForAuthenticatedUser(createRequest, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void createForAuthenticatedUser_shouldAllowSlotsThatStartWhenPreviousEnds() {
+        TaskServiceRequest createRequest = createRequestWithSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 2, 10, 0),
+                        LocalDateTime.of(2026, 5, 2, 11, 0)
+                ),
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 2, 11, 0),
+                        LocalDateTime.of(2026, 5, 2, 12, 0)
+                )
+        ));
+
+        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(owner));
+        when(serviceRepository.save(any(TaskService.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskService saved = serviceService.createForAuthenticatedUser(createRequest, "cecilia@test.com");
+
+        assertEquals(2, saved.getAvailableSlots().size());
+
+        verify(serviceRepository).save(any(TaskService.class));
     }
 
     @Test
@@ -166,6 +231,7 @@ class ServiceServiceTest {
         assertEquals("Ny titel", updated.getTitle());
         assertEquals("Ny beskrivning", updated.getDescription());
         assertEquals(500.0, updated.getPrice());
+        assertEquals("Lund", updated.getLocation());
 
         assertEquals(2, updated.getAvailableSlots().size());
         assertTrue(updated.getAvailableSlots().stream().anyMatch(AvailableSlot::isBooked));
@@ -204,11 +270,7 @@ class ServiceServiceTest {
 
     @Test
     void update_shouldThrowIllegalArgumentException_whenNewSlotHasInvalidTimeRange() {
-        TaskServiceRequest invalidRequest = new TaskServiceRequest();
-        invalidRequest.setTitle("Ny titel");
-        invalidRequest.setDescription("Ny beskrivning");
-        invalidRequest.setPrice(500.0);
-        invalidRequest.setAvailableSlots(List.of(
+        TaskServiceRequest invalidRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
                         LocalDateTime.of(2026, 5, 10, 12, 0),
                         LocalDateTime.of(2026, 5, 10, 11, 0)
@@ -223,6 +285,71 @@ class ServiceServiceTest {
         );
 
         verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void update_shouldThrowIllegalArgumentException_whenNewSlotIsInPast() {
+        TaskServiceRequest invalidRequest = createRequestWithSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.now().minusDays(1),
+                        LocalDateTime.now().minusDays(1).plusHours(1)
+                )
+        ));
+
+        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.update(10L, invalidRequest, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void update_shouldThrowIllegalArgumentException_whenNewSlotsOverlap() {
+        TaskServiceRequest invalidRequest = createRequestWithSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 10, 10, 0),
+                        LocalDateTime.of(2026, 5, 10, 11, 0)
+                ),
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 10, 10, 30),
+                        LocalDateTime.of(2026, 5, 10, 11, 30)
+                )
+        ));
+
+        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> serviceService.update(10L, invalidRequest, "cecilia@test.com")
+        );
+
+        verify(serviceRepository, never()).save(any());
+    }
+
+    @Test
+    void update_shouldAllowNewSlotsThatStartWhenPreviousEnds() {
+        TaskServiceRequest validRequest = createRequestWithSlots(List.of(
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 10, 10, 0),
+                        LocalDateTime.of(2026, 5, 10, 11, 0)
+                ),
+                createSlotRequest(
+                        LocalDateTime.of(2026, 5, 10, 11, 0),
+                        LocalDateTime.of(2026, 5, 10, 12, 0)
+                )
+        ));
+
+        when(serviceRepository.findById(10L)).thenReturn(Optional.of(taskService));
+        when(serviceRepository.save(any(TaskService.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskService updated = serviceService.update(10L, validRequest, "cecilia@test.com");
+
+        assertEquals(2, updated.getAvailableSlots().size());
+
+        verify(serviceRepository).save(taskService);
     }
 
     @Test
@@ -270,6 +397,16 @@ class ServiceServiceTest {
         );
 
         verify(serviceRepository, never()).delete(any());
+    }
+
+    private TaskServiceRequest createRequestWithSlots(List<AvailableSlotRequest> slots) {
+        TaskServiceRequest request = new TaskServiceRequest();
+        request.setTitle("Hundpromenad");
+        request.setDescription("Promenerar hund");
+        request.setPrice(200.0);
+        request.setLocation("Malmö");
+        request.setAvailableSlots(slots);
+        return request;
     }
 
     private AvailableSlotRequest createSlotRequest(LocalDateTime startTime, LocalDateTime endTime) {
