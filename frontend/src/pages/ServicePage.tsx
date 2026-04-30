@@ -235,6 +235,8 @@ export default function ServicesPage() {
                   (slot) => !slot.booked && isFutureSlot(slot)
                 ) ?? [];
 
+              const hasAvailableSlots = availableSlots.length > 0;
+
               const totalSlots = service.availableSlots?.length ?? 0;
 
               return (
@@ -246,9 +248,22 @@ export default function ServicesPage() {
                     </div>
 
                     <div style={styles.headerMeta}>
-                      <span style={isOwnService ? styles.ownBadge : styles.availableBadge}>
-                        {isOwnService ? "Din tjänst" : "Bokningsbar"}
+                      <span
+                        style={
+                          isOwnService
+                            ? styles.ownBadge
+                            : hasAvailableSlots
+                              ? styles.availableBadge
+                              : styles.fullyBookedBadge
+                        }
+                      >
+                        {isOwnService
+                          ? "Din tjänst"
+                          : hasAvailableSlots
+                            ? "Bokningsbar"
+                            : "Fullbokad"}
                       </span>
+
                       <span style={styles.priceTag}>{service.price} kr</span>
                     </div>
                   </div>
@@ -295,10 +310,18 @@ export default function ServicesPage() {
 
                       <div style={styles.actionRow}>
                         <button
-                          onClick={() => navigate(`/bookings/create/${service.id}`)}
-                          style={styles.primaryActionButton}
+                          onClick={() => {
+                            if (hasAvailableSlots) {
+                              navigate(`/bookings/create/${service.id}`);
+                            }
+                          }}
+                          disabled={!hasAvailableSlots}
+                          style={{
+                            ...styles.primaryActionButton,
+                            ...(!hasAvailableSlots ? styles.disabledActionButton : {}),
+                          }}
                         >
-                          Se lediga tider
+                          {hasAvailableSlots ? "Se lediga tider" : "Inga lediga tider"}
                         </button>
                       </div>
                     </div>
@@ -320,6 +343,23 @@ export default function ServicesPage() {
 }
 
 const styles: Record<string, CSSProperties> = {
+  fullyBookedBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "7px 12px",
+    borderRadius: "999px",
+    fontSize: "13px",
+    fontWeight: 700,
+    background: "#fee2e2",
+    color: "#991b1b",
+  },
+
+  disabledActionButton: {
+    background: "#e5e7eb",
+    color: "#6b7280",
+    cursor: "not-allowed",
+    boxShadow: "none",
+  },
   heroCard: {
     background: "linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)",
     border: "1px solid #dbeafe",
