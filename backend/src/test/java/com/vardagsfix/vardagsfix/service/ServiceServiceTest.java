@@ -68,8 +68,8 @@ class ServiceServiceTest {
         request.setLocation("Lund");
         request.setAvailableSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 1, 10, 0),
-                        LocalDateTime.of(2026, 5, 1, 11, 0)
+                        LocalDateTime.of(2046, 5, 1, 10, 0),
+                        LocalDateTime.of(2046, 5, 1, 11, 0)
                 )
         ));
     }
@@ -83,12 +83,12 @@ class ServiceServiceTest {
         createRequest.setLocation("Malmö");
         createRequest.setAvailableSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 2, 9, 0),
-                        LocalDateTime.of(2026, 5, 2, 10, 0)
+                        LocalDateTime.of(2046, 5, 2, 9, 0),
+                        LocalDateTime.of(2046, 5, 2, 10, 0)
                 ),
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 3, 14, 0),
-                        LocalDateTime.of(2026, 5, 3, 15, 0)
+                        LocalDateTime.of(2046, 5, 3, 14, 0),
+                        LocalDateTime.of(2046, 5, 3, 15, 0)
                 )
         ));
 
@@ -125,8 +125,8 @@ class ServiceServiceTest {
     void createForAuthenticatedUser_shouldThrowIllegalArgumentException_whenSlotHasInvalidTimeRange() {
         TaskServiceRequest createRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 2, 10, 0),
-                        LocalDateTime.of(2026, 5, 2, 9, 0)
+                        LocalDateTime.of(2046, 5, 2, 10, 0),
+                        LocalDateTime.of(2046, 5, 2, 9, 0)
                 )
         ));
 
@@ -163,12 +163,12 @@ class ServiceServiceTest {
     void createForAuthenticatedUser_shouldThrowIllegalArgumentException_whenSlotsOverlap() {
         TaskServiceRequest createRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 2, 10, 0),
-                        LocalDateTime.of(2026, 5, 2, 11, 0)
+                        LocalDateTime.of(2046, 5, 2, 10, 0),
+                        LocalDateTime.of(2046, 5, 2, 11, 0)
                 ),
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 2, 10, 30),
-                        LocalDateTime.of(2026, 5, 2, 11, 30)
+                        LocalDateTime.of(2046, 5, 2, 10, 30),
+                        LocalDateTime.of(2046, 5, 2, 11, 30)
                 )
         ));
 
@@ -186,12 +186,12 @@ class ServiceServiceTest {
     void createForAuthenticatedUser_shouldAllowSlotsThatStartWhenPreviousEnds() {
         TaskServiceRequest createRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 2, 10, 0),
-                        LocalDateTime.of(2026, 5, 2, 11, 0)
+                        LocalDateTime.of(2046, 5, 2, 10, 0),
+                        LocalDateTime.of(2046, 5, 2, 11, 0)
                 ),
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 2, 11, 0),
-                        LocalDateTime.of(2026, 5, 2, 12, 0)
+                        LocalDateTime.of(2046, 5, 2, 11, 0),
+                        LocalDateTime.of(2046, 5, 2, 12, 0)
                 )
         ));
 
@@ -209,15 +209,15 @@ class ServiceServiceTest {
     void update_shouldUpdateServiceAndReplaceUnbookedSlots_whenUserIsOwner() {
         AvailableSlot bookedSlot = new AvailableSlot();
         bookedSlot.setId(100L);
-        bookedSlot.setStartTime(LocalDateTime.of(2026, 5, 4, 10, 0));
-        bookedSlot.setEndTime(LocalDateTime.of(2026, 5, 4, 11, 0));
+        bookedSlot.setStartTime(LocalDateTime.of(2046, 5, 4, 10, 0));
+        bookedSlot.setEndTime(LocalDateTime.of(2046, 5, 4, 11, 0));
         bookedSlot.setBooked(true);
         bookedSlot.setTaskService(taskService);
 
         AvailableSlot unbookedSlot = new AvailableSlot();
         unbookedSlot.setId(101L);
-        unbookedSlot.setStartTime(LocalDateTime.of(2026, 5, 5, 10, 0));
-        unbookedSlot.setEndTime(LocalDateTime.of(2026, 5, 5, 11, 0));
+        unbookedSlot.setStartTime(LocalDateTime.of(2046, 5, 5, 10, 0));
+        unbookedSlot.setEndTime(LocalDateTime.of(2046, 5, 5, 11, 0));
         unbookedSlot.setBooked(false);
         unbookedSlot.setTaskService(taskService);
 
@@ -237,8 +237,8 @@ class ServiceServiceTest {
         assertTrue(updated.getAvailableSlots().stream().anyMatch(AvailableSlot::isBooked));
         assertTrue(updated.getAvailableSlots().stream().anyMatch(slot ->
                 !slot.isBooked()
-                        && slot.getStartTime().equals(LocalDateTime.of(2026, 5, 1, 10, 0))
-                        && slot.getEndTime().equals(LocalDateTime.of(2026, 5, 1, 11, 0))
+                        && slot.getStartTime().equals(LocalDateTime.of(2046, 5, 1, 10, 0))
+                        && slot.getEndTime().equals(LocalDateTime.of(2046, 5, 1, 11, 0))
         ));
 
         verify(serviceRepository).save(taskService);
@@ -272,8 +272,8 @@ class ServiceServiceTest {
     void update_shouldThrowIllegalArgumentException_whenNewSlotHasInvalidTimeRange() {
         TaskServiceRequest invalidRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 10, 12, 0),
-                        LocalDateTime.of(2026, 5, 10, 11, 0)
+                        LocalDateTime.of(2046, 5, 10, 12, 0),
+                        LocalDateTime.of(2046, 5, 10, 11, 0)
                 )
         ));
 
@@ -310,12 +310,12 @@ class ServiceServiceTest {
     void update_shouldThrowIllegalArgumentException_whenNewSlotsOverlap() {
         TaskServiceRequest invalidRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 10, 10, 0),
-                        LocalDateTime.of(2026, 5, 10, 11, 0)
+                        LocalDateTime.of(2046, 5, 10, 10, 0),
+                        LocalDateTime.of(2046, 5, 10, 11, 0)
                 ),
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 10, 10, 30),
-                        LocalDateTime.of(2026, 5, 10, 11, 30)
+                        LocalDateTime.of(2046, 5, 10, 10, 30),
+                        LocalDateTime.of(2046, 5, 10, 11, 30)
                 )
         ));
 
@@ -333,12 +333,12 @@ class ServiceServiceTest {
     void update_shouldAllowNewSlotsThatStartWhenPreviousEnds() {
         TaskServiceRequest validRequest = createRequestWithSlots(List.of(
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 10, 10, 0),
-                        LocalDateTime.of(2026, 5, 10, 11, 0)
+                        LocalDateTime.of(2046, 5, 10, 10, 0),
+                        LocalDateTime.of(2046, 5, 10, 11, 0)
                 ),
                 createSlotRequest(
-                        LocalDateTime.of(2026, 5, 10, 11, 0),
-                        LocalDateTime.of(2026, 5, 10, 12, 0)
+                        LocalDateTime.of(2046, 5, 10, 11, 0),
+                        LocalDateTime.of(2046, 5, 10, 12, 0)
                 )
         ));
 

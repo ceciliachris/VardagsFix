@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vardagsfix.vardagsfix.dto.LoginRequest;
 import com.vardagsfix.vardagsfix.dto.RegisterRequest;
 import com.vardagsfix.vardagsfix.model.AppUser;
+import com.vardagsfix.vardagsfix.security.JwtService;
 import com.vardagsfix.vardagsfix.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;

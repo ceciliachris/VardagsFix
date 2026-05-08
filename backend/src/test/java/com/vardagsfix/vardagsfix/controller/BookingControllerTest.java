@@ -7,13 +7,15 @@ import com.vardagsfix.vardagsfix.model.AvailableSlot;
 import com.vardagsfix.vardagsfix.model.Booking;
 import com.vardagsfix.vardagsfix.model.BookingStatus;
 import com.vardagsfix.vardagsfix.model.TaskService;
+import com.vardagsfix.vardagsfix.security.JwtService;
 import com.vardagsfix.vardagsfix.service.BookingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,7 +31,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookingController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class BookingControllerTest {
 
     @Autowired
@@ -40,6 +41,9 @@ class BookingControllerTest {
 
     @MockitoBean
     private BookingService bookingService;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     private Booking booking;
     private BookingRequest bookingRequest;
@@ -89,12 +93,13 @@ class BookingControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "olle@test.com")
     void create_shouldReturnBookingResponse() throws Exception {
         when(bookingService.createBooking(eq(bookingRequest), eq("olle@test.com")))
                 .thenReturn(booking);
 
         mockMvc.perform(post("/bookings")
-                        .principal(() -> "olle@test.com")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingRequest)))
                 .andExpect(status().isOk())
@@ -112,12 +117,12 @@ class BookingControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "olle@test.com")
     void getMyBookings_shouldReturnList() throws Exception {
         when(bookingService.getMyBookings("olle@test.com"))
                 .thenReturn(List.of(booking));
 
-        mockMvc.perform(get("/bookings/my")
-                        .principal(() -> "olle@test.com"))
+        mockMvc.perform(get("/bookings/my"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(50))
                 .andExpect(jsonPath("$[0].status").value("BOOKED"))
@@ -128,12 +133,12 @@ class BookingControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "cecilia@test.com")
     void getBookingsForMyServices_shouldReturnList() throws Exception {
         when(bookingService.getBookingsForMyServices("cecilia@test.com"))
                 .thenReturn(List.of(booking));
 
-        mockMvc.perform(get("/bookings/my-services")
-                        .principal(() -> "cecilia@test.com"))
+        mockMvc.perform(get("/bookings/my-services"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(50))
                 .andExpect(jsonPath("$[0].service.title").value("Hundpromenad"))
@@ -143,6 +148,7 @@ class BookingControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "olle@test.com")
     void cancel_shouldReturnUpdatedBooking() throws Exception {
         booking.setStatus(BookingStatus.CANCELLED);
 
@@ -150,7 +156,7 @@ class BookingControllerTest {
                 .thenReturn(booking);
 
         mockMvc.perform(patch("/bookings/50/cancel")
-                        .principal(() -> "olle@test.com"))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(50))
                 .andExpect(jsonPath("$.status").value("CANCELLED"));

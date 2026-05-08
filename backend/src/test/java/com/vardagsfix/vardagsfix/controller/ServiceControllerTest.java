@@ -6,13 +6,14 @@ import com.vardagsfix.vardagsfix.dto.TaskServiceRequest;
 import com.vardagsfix.vardagsfix.model.AppUser;
 import com.vardagsfix.vardagsfix.model.AvailableSlot;
 import com.vardagsfix.vardagsfix.model.TaskService;
+import com.vardagsfix.vardagsfix.security.JwtService;
 import com.vardagsfix.vardagsfix.service.ServiceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,7 +31,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ServiceController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class ServiceControllerTest {
 
     @Autowired
@@ -40,6 +41,9 @@ class ServiceControllerTest {
 
     @MockitoBean
     private ServiceService serviceService;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     private TaskService taskService;
     private TaskServiceRequest request;
@@ -79,12 +83,13 @@ class ServiceControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "cecilia@test.com")
     void create_shouldReturnServiceResponse() throws Exception {
         when(serviceService.createForAuthenticatedUser(eq(request), eq("cecilia@test.com")))
                 .thenReturn(taskService);
 
         mockMvc.perform(post("/services")
-                        .principal(() -> "cecilia@test.com")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -100,6 +105,7 @@ class ServiceControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAll_shouldReturnList() throws Exception {
         when(serviceService.getAll()).thenReturn(List.of(taskService));
 
@@ -114,12 +120,12 @@ class ServiceControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "cecilia@test.com")
     void getMyServices_shouldReturnList() throws Exception {
         when(serviceService.getByUser("cecilia@test.com"))
                 .thenReturn(List.of(taskService));
 
-        mockMvc.perform(get("/services/my")
-                        .principal(() -> "cecilia@test.com"))
+        mockMvc.perform(get("/services/my"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].title").value("Hundpromenad"));
@@ -128,12 +134,13 @@ class ServiceControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "cecilia@test.com")
     void update_shouldReturnUpdatedService() throws Exception {
         when(serviceService.update(eq(10L), eq(request), eq("cecilia@test.com")))
                 .thenReturn(taskService);
 
         mockMvc.perform(put("/services/10")
-                        .principal(() -> "cecilia@test.com")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -145,9 +152,10 @@ class ServiceControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "cecilia@test.com")
     void delete_shouldReturnOk() throws Exception {
         mockMvc.perform(delete("/services/10")
-                        .principal(() -> "cecilia@test.com"))
+                        .with(csrf()))
                 .andExpect(status().isOk());
 
         verify(serviceService).delete(10L, "cecilia@test.com");

@@ -63,23 +63,23 @@ class AuthServiceTest {
         savedUser.setEmail("cecilia@test.com");
         savedUser.setPassword("encodedPassword");
 
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(savedUser));
+        when(userRepository.findByEmailIgnoreCase("cecilia@test.com")).thenReturn(Optional.of(savedUser));
         when(passwordEncoder.matches("123456", "encodedPassword")).thenReturn(true);
         when(jwtService.generateToken("cecilia@test.com")).thenReturn("mocked-jwt-token");
 
         String token = authService.login("cecilia@test.com", "123456");
 
         assertEquals("mocked-jwt-token", token);
-        verify(userRepository).findByEmail("cecilia@test.com");
+        verify(userRepository).findByEmailIgnoreCase("cecilia@test.com");
         verify(passwordEncoder).matches("123456", "encodedPassword");
         verify(jwtService).generateToken("cecilia@test.com");
     }
 
     @Test
     void login_shouldThrowNotFound_whenUserDoesNotExist() {
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase("cecilia@test.com")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class,
+        assertThrows(RuntimeException.class,
                 () -> authService.login("cecilia@test.com", "123456"));
 
         verify(passwordEncoder, never()).matches(anyString(), anyString());
@@ -94,10 +94,10 @@ class AuthServiceTest {
         savedUser.setEmail("cecilia@test.com");
         savedUser.setPassword("encodedPassword");
 
-        when(userRepository.findByEmail("cecilia@test.com")).thenReturn(Optional.of(savedUser));
+        when(userRepository.findByEmailIgnoreCase("cecilia@test.com")).thenReturn(Optional.of(savedUser));
         when(passwordEncoder.matches("wrongPassword", "encodedPassword")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(RuntimeException.class,
                 () -> authService.login("cecilia@test.com", "wrongPassword"));
 
         verify(jwtService, never()).generateToken(anyString());

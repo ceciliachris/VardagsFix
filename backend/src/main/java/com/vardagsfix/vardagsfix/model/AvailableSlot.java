@@ -1,5 +1,6 @@
 package com.vardagsfix.vardagsfix.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,5 +24,6 @@ public class AvailableSlot {
 
     @ManyToOne
     @JoinColumn(name = "service_id", nullable = false)
+    @JsonIgnore
     private TaskService taskService;
 }
