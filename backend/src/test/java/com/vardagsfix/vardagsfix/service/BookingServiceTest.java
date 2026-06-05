@@ -72,8 +72,8 @@ class BookingServiceTest {
 
         availableSlot = new AvailableSlot();
         availableSlot.setId(100L);
-        availableSlot.setStartTime(LocalDateTime.of(2026, 5, 10, 10, 0));
-        availableSlot.setEndTime(LocalDateTime.of(2026, 5, 10, 11, 0));
+        availableSlot.setStartTime(LocalDateTime.of(2066, 5, 10, 10, 0));
+        availableSlot.setEndTime(LocalDateTime.of(2066, 5, 10, 11, 0));
         availableSlot.setBooked(false);
         availableSlot.setTaskService(taskService);
 
