@@ -239,9 +239,9 @@ Resultatet av projektet är en fullstack-applikation, Vardagsfix, för bokning a
 
 Figur 2,3,4 visar applikationens inloggningssida, tjänstöversikt, där användaren kan se tillgängliga tider och aktuell bokningsstatus samt sidan där man hittar sina egna tjänster som en användare har lagt upp.
 
-![alt text](bilder\inlogg.png)
-![alt text](bilder\boka.png)
-![alt text](bilder\mina tjänster.png)
+![beskrivning](bilder\inlogg.png)
+![beskrivning](bilder\boka.png)
+![beskrivning](bilder\mina tjänster.png)
  
 Systemet implementerar autentisering med JSON Web Tokens (JWT), vilket möjliggör skyddade endpoints och identifiering av inloggad användare vid varje anrop. Backend är strukturerad i tre lager: controllers, services och repositories och kommunicerar med frontend via ett REST-baserat API. PostgreSQL används som ordinarie databas i applikationens körmiljö, medan H2 används som in-memory-databas under integrationstester.
  
@@ -338,7 +338,7 @@ test("visar endast framtida och obokade tider", async () => {
 
 Figur 6 visar resultatet från frontendens automatiserade testkörning. Samtliga 52 frontendtester passerade utan misslyckade tester.
 
-![alt text](bilder\Testresultat Frontend.png)
+![beskrivning](bilder\Testresultat Frontend.png)
 
 ### 4.3 Oväntade Resultat
 
