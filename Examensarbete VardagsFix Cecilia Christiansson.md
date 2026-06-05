@@ -237,11 +237,11 @@ Genom att kombinera flera testnivåer kunde systemets tillförlitlighet stärkas
 
 Resultatet av projektet är en fullstack-applikation, Vardagsfix, för bokning av vardagstjänster. Användare kan via ett webbgränssnitt registrera sig, logga in, skapa tjänster med tillgängliga tider, boka andra användares tjänster samt hantera och avboka befintliga bokningar.
 
-Figur 2,3,4 visar applikationens inloggningssida, tjänsteöversikt, där användaren kan se publicerade tjänster, tillgängliga tider och aktuell bokningsstatus samt sidan där man hittar sina egna tjänster som en användare har lagt upp.
+Figur 2,3,4 visar applikationens inloggningssida, tjänstöversikt, där användaren kan se tillgängliga tider och aktuell bokningsstatus samt sidan där man hittar sina egna tjänster som en användare har lagt upp.
 
-![alt text](image-4.png)
-![alt text](image-3.png)
-![alt text](image-5.png)
+![alt text](bilder\inlogg.png)
+![alt text](bilder\boka.png)
+![alt text](bilder\mina tjänster.png)
  
 Systemet implementerar autentisering med JSON Web Tokens (JWT), vilket möjliggör skyddade endpoints och identifiering av inloggad användare vid varje anrop. Backend är strukturerad i tre lager: controllers, services och repositories och kommunicerar med frontend via ett REST-baserat API. PostgreSQL används som ordinarie databas i applikationens körmiljö, medan H2 används som in-memory-databas under integrationstester.
  
@@ -304,7 +304,7 @@ Integrationstesterna är de enda tester som verifierar samspelet mellan JWT-aute
 
 Figur 5 visar resultatet från backendens automatiserade testkörning. Samtliga 58 backendtester passerade utan misslyckade tester.
 
-![alt text](image-6.png)
+![alt text](bilder\Testresultat Backend.png)
  
 **Frontendtester — 52 tester**
  
@@ -338,7 +338,7 @@ test("visar endast framtida och obokade tider", async () => {
 
 Figur 6 visar resultatet från frontendens automatiserade testkörning. Samtliga 52 frontendtester passerade utan misslyckade tester.
 
-![alt text](image-7.png)
+![alt text](bilder\Testresultat Frontend.png)
 
 ### 4.3 Oväntade Resultat
 
