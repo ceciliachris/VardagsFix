@@ -143,7 +143,7 @@ För frontend valdes React med TypeScript. React möjliggör komponentbaserad ut
  
 #### Val av teststrategi och testverktyg
  
-Teststrategin utformades utifrån konceptet med en testpyramid, där ett stort antal snabba enhetstester bildar basen, ett lager av integrationstester täcker samspelet mellan komponenter, och ett mindre antal bredare tester täcker fullständiga användarflöden [7]. I backend användes JUnit 5 som testramverk. Mockito användes för att mocka beroenden i enhets- och controllertester, vilket möjliggjorde isolerad testning av affärslogik utan databasanrop. Mockito användes för att mocka beroenden i enhets- och controllertester, vilket möjliggör isolerad testning av affärslogik utan databasanrop. För integrationstester valdes H2 som in-memory-databas, vilket möjliggör realistiska databasanrop utan att en extern databas behöver köras under testning [8].
+Teststrategin utformades utifrån konceptet med en testpyramid, där ett stort antal snabba enhetstester bildar basen, ett lager av integrationstester täcker samspelet mellan komponenter, och ett mindre antal bredare tester täcker fullständiga användarflöden [7]. I backend användes JUnit 5 som testramverk. Mockito användes för att mocka beroenden i enhets- och controllertester, vilket möjliggjorde isolerad testning av affärslogik utan databasanrop. För integrationstester valdes H2 som in-memory-databas, vilket möjliggör realistiska databasanrop utan att en extern databas behöver köras under testning [8].
  
 I frontend valdes Vitest eftersom det bygger på Vite och kan återanvända projektets Vite-konfiguration och transform-pipeline [9]. React Testing Library valdes för att testa komponenter ur ett användarperspektiv snarare än att testa interna implementationsdetaljer, vilket minskar risken att tester bryts vid refaktorering [10].
 
@@ -458,7 +458,7 @@ Slutligen finns det potential att vidareutveckla användargränssnittet med foku
 
 ## 7. Referenser
 
-[1] R. T. Fielding, "Architectural Styles and the Design of Network-based Software Architectures," Ph.D. dissertation, University of California, Irvine, 2000. [Online]. Available: https://ics.uci.edu/~fielding/pubs/dissertation/top.htm. [Accessed: 05 June 2026].
+[1] R. T. Fielding, "Architectural Styles and the Design of Network-based Software Architectures," Ph.D. dissertation, University of California, Irvine, 2000, ch. 5. [Online]. Available: https://ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm. [Accessed: 05 June 2026].
 
 [2] M. Jones, J. Bradley, and N. Sakimura, "JSON Web Token (JWT)," RFC 7519, Internet Engineering Task Force (IETF), May 2015. [Online]. Available: https://www.rfc-editor.org/rfc/rfc7519. [Accessed: 05 June 2026].
 
