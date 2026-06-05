@@ -203,7 +203,7 @@ Utifrån dessa krav utformades systemets datamodell med fyra centrala domänmode
 
 Figur 1 visar systemets lagerindelning samt relationerna mellan de centrala domänmodellerna.
 
-![Beskrivning](bilder/Klassdiagram%20slutgiltig%20version.png)
+![Klassdiagram över Vardagsfix systemstruktur](bilder/Klassdiagram%20slutgiltig%20version.png)
  
 Modellen `AvailableSlot` används för att representera bokningsbara tidsintervall. Denna separation möjliggör tydlig kontroll över vilka tider en tjänsteägare erbjuder och vilka bokningar som faktiskt existerar, och visade sig vara central för att förhindra dubbelbokningar och tydligt markera om en tid är bokad eller ledig.
  
@@ -237,7 +237,7 @@ Genom att kombinera flera testnivåer kunde systemets tillförlitlighet stärkas
 
 Resultatet av projektet är en fullstack-applikation, Vardagsfix, för bokning av vardagstjänster. Användare kan via ett webbgränssnitt registrera sig, logga in, skapa tjänster med tillgängliga tider, boka andra användares tjänster samt hantera och avboka befintliga bokningar.
 
-Figur 2,3,4 visar applikationens inloggningssida, tjänstöversikt, där användaren kan se tillgängliga tider och aktuell bokningsstatus samt sidan där man hittar sina egna tjänster som en användare har lagt upp.
+Figurerna 2–4 visar applikationens inloggningssida, bokningssida och sida för hantering av användarens egna tjänster. På bokningssidan kan användaren se tillgängliga tider, välja en tid och lämna ett meddelande till tjänsteutföraren.
 
 ![Inloggningssidan i Vardagsfix](bilder/inlogg.png) 
 ![Tjänsteöversikten i Vardagsfix](bilder/boka.png) 
@@ -356,7 +356,7 @@ En annan insikt var att frontend-testerna identifierade behov av tydligare tills
  
 **Hur kan enhetstester verifiera centrala affärsregler i bokningslogiken?**
  
-Enhetstesterna i `BookingServiceTest` och `ServiceServiceTest` visar att service-lagret är effektivt att testa isolerat via Mockito. Genom att mocka repositories kan varje affärsregel verifieras utan databas, vilket ger snabb återkoppling. De 17 testerna i `BookingServiceTest` täcker åtta distinkta felscenarier vid bokning samt fyra vid avbokning. En viktig insikt är att testerna inte bara verifierar att rätt undantag kastas, utan även att sidoeffekter uteblir — exempelvis att `bookingRepository.save()` aldrig anropas vid ogiltig indata. Detta stärker tillförlitligheten eftersom det säkerställer att ett fel inte bara ger rätt felmeddelande, utan också lämnar systemet i korrekt tillstånd.
+Enhetstesterna i `BookingServiceTest` och `ServiceServiceTest` visar att service-lagret är effektivt att testa isolerat via Mockito. Genom att mocka repositories kan varje affärsregel verifieras utan databas, vilket ger snabb återkoppling. De 17 testerna i `BookingServiceTest` täcker åtta distinkta felscenarier vid bokning samt fyra vid avbokning. En viktig insikt är att testerna inte bara verifierar att rätt undantag kastas, utan även att sidoeffekter uteblir, exempelvis att `bookingRepository.save()` aldrig anropas vid ogiltig indata. Detta stärker tillförlitligheten eftersom det säkerställer att ett fel inte bara ger rätt felmeddelande, utan också lämnar systemet i korrekt tillstånd.
  
 **Hur kan controllertester verifiera att API-lagret returnerar korrekt respons och datamappning?**
  
@@ -380,7 +380,7 @@ Backendens lagerstruktur visade sig vara ett effektivt designval för testbarhet
  
 Datamodellen med `AvailableSlot` som separat entitet visade sig ha stor påverkan på systemets robusthet. Designvalet möjliggjorde tydlig kontroll av bokningsbara tider och förenkling av dubbelbokningsskyddet. En alternativ design utan denna entitet, där tider lagrats direkt i bokningsobjektet hade gjort det svårare att skilja mellan erbjudna och bokade tider samt att visa lediga tider i gränssnittet.
  
-Jämfört med etablerade plattformar som Tipptapp och Yepstr är Vardagsfix en prototyp utan produktionskrav. Resultatet visar dock att kärnfunktionaliteten i ett bokningssystem kan implementeras med korrekt logik och verifieras med automatiserade tester, vilket är det primära syftet med projektet.
+Jämfört med etablerade plattformar som Tiptapp och Yepstr är Vardagsfix en prototyp utan produktionskrav. Resultatet visar dock att kärnfunktionaliteten i ett bokningssystem kan implementeras med korrekt logik och verifieras med automatiserade tester, vilket är det primära syftet med projektet.
  
 ### 5.2 Reflektion över Metod
 
@@ -462,11 +462,11 @@ Slutligen finns det potential att vidareutveckla användargränssnittet med foku
 
 [2] M. Jones, J. Bradley, and N. Sakimura, "JSON Web Token (JWT)," RFC 7519, Internet Engineering Task Force (IETF), May 2015. [Online]. Available: https://www.rfc-editor.org/rfc/rfc7519. [Accessed: 05 June 2026].
 
-[3] Tiptapp AB, "Tiptapp — moving, delivery and recycling," tiptapp.com. [Online]. Available: https://www.tipptapp.com. [Accessed: 05 June 2026].
+[3] Tiptapp AB, "Tiptapp — moving, delivery and recycling," tiptapp.com. [Online]. Available: https://tiptapp.com/sv-se/home. [Accessed: 05 June 2026].
 
 [4] Yepstr AB, "Hushållsnära tjänster — hjälp i hemmet från duktiga ungdomar," yepstr.com. [Online]. Available: https://www.yepstr.com/se. [Accessed: 05 June 2026].
 
-[5] Blocket, "Användarvillkor på Blocket," blocket.se. [Online]. Available: https://www.blocket.se/villkor/villkor-privat/anvandarvillkor. [Accessed: 05 June 2026].
+[5] Blocket, "Användarvillkor på Blocket," blocket.se. [Online]. Available: https://www.blocket.se/. [Accessed: 05 June 2026].
 
 [6] Bark.com Ltd, "Bark.com — Find the Right Professional," bark.com. [Online]. Available: https://www.bark.com. [Accessed: 05 June 2026].
 
@@ -502,5 +502,5 @@ Slutligen finns det potential att vidareutveckla användargränssnittet med foku
 | 19–25 apr | Frontend: testning, buggfixar, förbättringar | 35h |
 | 26 apr–2 maj | Fullstack-integration, slutjusteringar, dokumentation | 35h |
 | 3–9 maj | Rapport, källhänvisningar, bilagor, slutgranskning | 35h |
-| 4-5 juni | Redovisning, slutgranskning av rapport | 12h |
+| 4–5 juni | Redovisning, slutgranskning av rapport | 12h |
 | **Totalt** | | **240h** |
