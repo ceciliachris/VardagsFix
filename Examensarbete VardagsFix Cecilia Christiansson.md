@@ -203,7 +203,7 @@ Utifrån dessa krav utformades systemets datamodell med fyra centrala domänmode
 
 Figur 1 visar systemets lagerindelning samt relationerna mellan de centrala domänmodellerna.
 
-![alt text](image-8.png)
+![Beskrivning](bilder/Klassdiagram%20slutgiltig%20version.png)
  
 Modellen `AvailableSlot` används för att representera bokningsbara tidsintervall. Denna separation möjliggör tydlig kontroll över vilka tider en tjänsteägare erbjuder och vilka bokningar som faktiskt existerar, och visade sig vara central för att förhindra dubbelbokningar och tydligt markera om en tid är bokad eller ledig.
  
